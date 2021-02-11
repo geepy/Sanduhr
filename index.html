@@ -1,0 +1,157 @@
+<html>
+
+<head>
+    <title>Sanduhr</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="1000" height="1000" id="my-canvas"></canvas>
+    <p id='log' />
+
+    <script lang="javascript">
+        const log = document.getElementById('log');
+        const canvas = document.getElementById('my-canvas');
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        var pos1 = { x: 200, y: 50 };
+        var pos2 = { x: 800, y: 50 };
+        const shortLength = 300;
+        const longLength = 600;
+        const leftArmColor = '#ff0000';
+        const rightArmCOlor = '#0000ff';
+        const servo1 = { x: 200, y: 50, degrees: 90, shortLength: 300, color: '#ff0000' };
+        const servo2 = { x: 800, y: 50, degrees: 180, shortLength: 300, color: '#0000ff' };
+        const backgroundColor = '#c0c020';
+        const sandarea = { x: 0, y: 300, width: 1000, height: 500 };
+
+        // utilities
+        function degToRad(degrees) {
+            return degrees * Math.PI / 180;
+        }
+
+        function radToDeg(rad) {
+            return rad * 180 / Math.PI;
+        }
+
+        function drawCircle(x, y, radius, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, degToRad(0), degToRad(359), false);
+            ctx.fill();
+        }
+
+        function drawLine(x1, y1, x2, y2, color) {
+            armWidth = 10;
+            drawCircle(x1, y1, armWidth, color);
+            drawCircle(x2, y2, armWidth, color);
+            ctx.lineWidth = 2 * armWidth;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = color;
+            ctx.stroke();
+        }
+
+        function drawArm(pos, degrees, degrees2, color) {
+            var dx = shortLength * Math.cos(degToRad(degrees));
+            var dy = shortLength * Math.sin(degToRad(degrees));
+
+            var middle = { x: pos.x + dx, y: pos.y + dy };
+            drawLine(pos.x, pos.y, middle.x, middle.y, color);
+
+            realDegree2 = (degrees + degrees2 - 180) % 360;
+
+            dx = longLength * Math.cos(degToRad(realDegree2));
+            dy = longLength * Math.sin(degToRad(realDegree2));
+
+            var end = { x: middle.x + dx, y: middle.y + dy };
+            drawLine(middle.x, middle.y, end.x, end.y, color);
+        }
+
+        function drawAt(servo1, servo2, color) {
+            var realDegree2 = (servo1.degrees + servo2.degrees) % 360;
+            var x2 = servo.x + shortLength * (Math.cos(degToRad(degree1)) + Math.cos(degToRad(realDegree2)));
+            var y2 = servo.y + shortLength * (Math.sin(degToRad(degree1)) + Math.sin(degToRad(realDegree2)));
+            drawCircle(x2, y2, armWidth, color);
+        }
+
+        // show sandbox
+        function erase() {
+            ctx.fillStyle = '#c0c020';
+            ctx.fillRect(sandarea.x, sandarea.y, sandarea.width, sandarea.height);
+        }
+
+        function step1() {
+            // show servos
+            drawCircle(servo1.x, servo1.y, 10, '#ff0000');
+            drawCircle(servo2.x, servo2.y, 10, '#0000ff');
+
+            drawArm(servo1, servo2, '#0000ff');
+            drawArm(servo2, servo1, '#ff0000');
+        }
+
+        function step2() {
+            servo1.degrees = 90; servo2.degrees = 90;
+            drawArm(servo1, servo2, '#0000ff');
+            drawArm(servo2, servo1, '#ff0000');
+        }
+
+        function followMouse(event) {
+            var rect = this.getBoundingClientRect(),
+                target = {
+                    x: event.clientX - rect.left,
+                    y: event.clientY - rect.top
+                };
+
+            if ((target.x < sandarea.x)
+                || (target.y < sandarea.y)
+                || (target.x > (sandarea.x + sandarea.width))
+                || (target.y > (sandarea.y + sandarea.height))) {
+                return;
+            }
+
+            // erase old arm
+            erase();
+
+            // first arm starts at servo1 position
+            function drawArms(from, to, color, mode) {
+                var dx = to.x - from.x;
+                var dy = to.y - from.y;
+
+                var r = Math.sqrt(dx * dx + dy * dy);
+
+                var alpha = radToDeg(Math.asin(dy / r));
+                if (dx < 0) {
+                    alpha = 180 - alpha;
+                }
+
+                var beta = radToDeg(Math.acos((r / 2) / shortLength));
+
+                // draw new arm
+                if (mode == 0) {
+                    drawArm(from, alpha + beta, 180 - 2 * beta, color);
+                }
+                else {
+                    drawArm(from, alpha - beta , 180 + 2 * beta, color);
+                }
+            }
+            drawCircle(target.x, target.y, 2, '#000000');
+            drawArms(pos1, target, '#ff0000', 0);
+            drawArms(pos2, target, '#0000ff', 1);
+            log.innerText = ``;
+        }
+
+        //step2();
+        canvas.onmousemove = followMouse;
+
+    </script>
+</body>
+
+</html>

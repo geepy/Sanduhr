@@ -1,0 +1,56 @@
+<html>
+
+<head>
+    <title>Meine tolle Seite</title>
+</head>
+
+<body>
+    <canvas width="1000px" height="1000" id="my-canvas"></canvas>
+</body>
+<script lang="javascript">
+    const myCanvas = document.getElementById("my-canvas")
+    const ctx = myCanvas.getContext('2d');
+    const servo1_pos = { x: 190, y: 50 }
+    const servo2_pos = { x: 810, y: 50 }
+
+    function degToRad(angle) {
+        return angle * Math.PI / 180;
+    }
+
+    function drawDot(point, size) {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, size/2, degToRad(0), degToRad(359), false);
+        ctx.fill();
+    }
+
+    function drawServo(servo_pos) {
+        ctx.fillStyle = 'green';
+        ctx.fillRect(servo_pos.x - 90, servo_pos.y - 40, 180, 80);
+        ctx.fillStyle = 'black';
+        drawDot(servo_pos, 10);
+    }
+
+    function drawArm(start, ende) {
+        const armWidth = 20;
+        drawDot(start, armWidth);
+        ctx.beginPath();
+        ctx.moveTo(start.x, start.y);
+        ctx.lineWidth = armWidth;
+        ctx.lineTo(ende.x, ende.y);
+        ctx.strokeStyle = 'black';
+        ctx.stroke();
+        drawDot(ende, armWidth);
+    }
+
+    ctx.fillStyle = '#ffc000';
+    ctx.fillRect(0, 0, 1000, 1000);
+
+    drawServo(servo1_pos);
+    drawServo(servo2_pos);
+
+    drawArm(servo1_pos, servo2_pos);
+
+
+</script>
+
+</html>
