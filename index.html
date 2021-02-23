@@ -11,8 +11,47 @@
 </head>
 
 <body>
-    <canvas width="1000" height="1000" id="my-canvas"></canvas>
-    <p id='log' />
+    <canvas width="1400" height="800" id="my-canvas"></canvas>
+    <h3>Parameter</h3>
+    <table>
+        <tr>
+            <td>
+                <h4>innerer Arm</h4>
+            </td>
+            <td><input type="range" min="1" max="1000" value="400" id="inner_arm_length"
+                    onchange="inner_arm_length_value.innerText=this.value"></td>
+            <td id='inner_arm_length_value'></td>
+        </tr>
+        <tr>
+            <td>
+                <h4>&Auml;u&szlig;erer Arm</h4>
+            </td>
+            <td><input type="range" min="1" max="1000" value="550" id="outer_arm_length"
+                    onchange="outer_arm_length_value.innerText=this.value"></td>
+            <td id='outer_arm_length_value'></td>
+        </tr>
+        <tr>
+            <td>
+                <h4>Abstand Servo zu Sand</h4>
+            </td>
+            <td><input type="range" min="0" max="300" value="200" id="distance_to_sand"
+                    oninput="distance_to_sand_value.innerText=this.value"></td>
+            <td id='distance_to_sand_value'></td>
+        </tr>
+        <tr>
+            <td>Abstand Servos zueinander</td>
+            <td><input type="range" min="1" max="1400" value="200" id="distance_servos"
+                    oninput="distance_servos_value.innerText=this.value"></td>
+            <td id='distance_servos_value'></td>
+        </tr>
+    </table>
+
+    <h3>Output</h3>
+    <h4>Arm links</h4>
+    <p id='log_1' />
+    <h4>Arm rechts</h4>
+    <p id='log_2' />
+
 
     <script lang="javascript">
         const log = document.getElementById('log');
@@ -22,14 +61,26 @@
         const height = canvas.height;
         var pos1 = { x: 200, y: 50 };
         var pos2 = { x: 800, y: 50 };
-        const shortLength = 300;
-        const longLength = 600;
+        var innerLength = 400;
+        var outerLength = 550;
+        const armWidth = 10;
         const leftArmColor = '#ff0000';
-        const rightArmCOlor = '#0000ff';
-        const servo1 = { x: 200, y: 50, degrees: 90, shortLength: 300, color: '#ff0000' };
-        const servo2 = { x: 800, y: 50, degrees: 180, shortLength: 300, color: '#0000ff' };
+        const rightArmColor = '#0000ff';
+        const servo1 = {};
+        const servo2 = {};
         const backgroundColor = '#c0c020';
-        const sandarea = { x: 0, y: 300, width: 1000, height: 500 };
+        const sandarea = {
+            x: 0,
+            y: 300, 
+            width: 1000,
+            height: 500
+        };
+
+        // initialize
+        inner_arm_length_value.innerText  = inner_arm_length.value = innerLength; 
+        outer_arm_length_value.innerText = outer_arm_length.value = outerLength; 
+        distance_to_sand_value.innerText = distance_to_sand.value = 200; 
+        distance_servos_value.innerText = distance_servos.value = 200; 
 
         // utilities
         function degToRad(degrees) {
@@ -40,67 +91,51 @@
             return rad * 180 / Math.PI;
         }
 
-        function drawCircle(x, y, radius, color) {
+        function drawCircle(point, radius, color) {
             ctx.fillStyle = color;
             ctx.beginPath();
-            ctx.arc(x, y, radius, degToRad(0), degToRad(359), false);
+            ctx.arc(point.x, point.y, radius, degToRad(0), degToRad(359), false);
             ctx.fill();
         }
 
-        function drawLine(x1, y1, x2, y2, color) {
-            armWidth = 10;
-            drawCircle(x1, y1, armWidth, color);
-            drawCircle(x2, y2, armWidth, color);
+        function drawLine(from, to, color) {
+            drawCircle(from, armWidth, color);
+            drawCircle(to, armWidth, color);
             ctx.lineWidth = 2 * armWidth;
             ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
+            ctx.moveTo(from.x, from.y);
+            ctx.lineTo(to.x, to.y);
             ctx.strokeStyle = color;
             ctx.stroke();
         }
 
         function drawArm(pos, degrees, degrees2, color) {
-            var dx = shortLength * Math.cos(degToRad(degrees));
-            var dy = shortLength * Math.sin(degToRad(degrees));
+            var dx = innerLength * Math.cos(degrees);
+            var dy = innerLength * Math.sin(degrees);
 
-            var middle = { x: pos.x + dx, y: pos.y + dy };
-            drawLine(pos.x, pos.y, middle.x, middle.y, color);
+            var middle = {
+                x: pos.x + dx,
+                y: pos.y + dy
+            };
+            drawLine(pos, middle, color);
 
-            realDegree2 = (degrees + degrees2 - 180) % 360;
+            realDegree2 = (degrees + degrees2 - Math.PI) % (2 * Math.PI);
 
-            dx = longLength * Math.cos(degToRad(realDegree2));
-            dy = longLength * Math.sin(degToRad(realDegree2));
+            dx = outerLength * Math.cos(realDegree2);
+            dy = outerLength * Math.sin(realDegree2);
 
-            var end = { x: middle.x + dx, y: middle.y + dy };
-            drawLine(middle.x, middle.y, end.x, end.y, color);
+            var end = {
+                x: middle.x + dx,
+                y: middle.y + dy
+            };
+            drawLine(middle, end, color);
         }
 
-        function drawAt(servo1, servo2, color) {
-            var realDegree2 = (servo1.degrees + servo2.degrees) % 360;
-            var x2 = servo.x + shortLength * (Math.cos(degToRad(degree1)) + Math.cos(degToRad(realDegree2)));
-            var y2 = servo.y + shortLength * (Math.sin(degToRad(degree1)) + Math.sin(degToRad(realDegree2)));
-            drawCircle(x2, y2, armWidth, color);
-        }
-
-        // show sandbox
         function erase() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, width, height);
             ctx.fillStyle = '#c0c020';
             ctx.fillRect(sandarea.x, sandarea.y, sandarea.width, sandarea.height);
-        }
-
-        function step1() {
-            // show servos
-            drawCircle(servo1.x, servo1.y, 10, '#ff0000');
-            drawCircle(servo2.x, servo2.y, 10, '#0000ff');
-
-            drawArm(servo1, servo2, '#0000ff');
-            drawArm(servo2, servo1, '#ff0000');
-        }
-
-        function step2() {
-            servo1.degrees = 90; servo2.degrees = 90;
-            drawArm(servo1, servo2, '#0000ff');
-            drawArm(servo2, servo1, '#ff0000');
         }
 
         function followMouse(event) {
@@ -110,42 +145,65 @@
                     y: event.clientY - rect.top
                 };
 
+            innerLength = Number(inner_arm_length.value);
+            outerLength = Number(outer_arm_length.value);
+            servo1.y = servo2.y = sandarea.y - Number(distance_to_sand.value);
+            servo1.x = (sandarea.width - Number(distance_servos.value)) / 2;
+            servo2.x = (sandarea.width + Number(distance_servos.value)) / 2;
+
             if ((target.x < sandarea.x)
                 || (target.y < sandarea.y)
                 || (target.x > (sandarea.x + sandarea.width))
-                || (target.y > (sandarea.y + sandarea.height))) {
+                || (target.y > (sandarea.y + sandarea.height)))
                 return;
-            }
+            if (target.x < sandarea.x) target.x = sandarea.x;
+            if (target.y < sandarea.y) target.y = sandarea.y;
+            if (target.x > (sandarea.x + sandarea.width)) target.x = sandarea.x + sandarea.width
+            if (target.y > (sandarea.y + sandarea.height)) target.y = (sandarea.y + sandarea.height)
 
             // erase old arm
             erase();
 
             // first arm starts at servo1 position
-            function drawArms(from, to, color, mode) {
-                var dx = to.x - from.x;
-                var dy = to.y - from.y;
+            function calculateArm(from, to, color, mode) {
+                var x = to.x - from.x;
+                var y = to.y - from.y;
 
-                var r = Math.sqrt(dx * dx + dy * dy);
+                var r = Math.sqrt(x ** 2 + y ** 2);
 
-                var alpha = radToDeg(Math.asin(dy / r));
-                if (dx < 0) {
-                    alpha = 180 - alpha;
+                var alpha_1 = Math.acos(x / r);
+                var alpha_2 = Math.acos((innerLength ** 2 + r ** 2 - outerLength ** 2) / ((2 * innerLength * r)));
+                var beta = Math.acos((innerLength ** 2 + outerLength ** 2 - r ** 2) / ((2 * innerLength * outerLength)));
+
+                var alpha;
+                if (mode == 0) {
+                    alpha = alpha_1 + alpha_2;
+                    beta = beta;
+                } else {
+                    alpha = alpha_1 - alpha_2;
+                    beta = 2 * Math.PI - beta;
                 }
 
-                var beta = radToDeg(Math.acos((r / 2) / shortLength));
 
-                // draw new arm
+                const precision = 3;
+                var logHtml =
+                    '&alpha;<sub>1</sub>=' + radToDeg(alpha_1).toFixed(1)
+                    + ', &alpha;<sub>2</sub>=' + radToDeg(alpha_2).toFixed(1)
+                    + ', &alpha;=' + radToDeg(alpha).toFixed(1)
+                    + ', &beta;=' + radToDeg(beta).toFixed(1);
                 if (mode == 0) {
-                    drawArm(from, alpha + beta, 180 - 2 * beta, color);
+                    log_1.innerHTML = logHtml;
                 }
                 else {
-                    drawArm(from, alpha - beta , 180 + 2 * beta, color);
+                    log_2.innerHTML = logHtml;
                 }
+
+                drawArm(from, alpha, beta, color);
             }
-            drawCircle(target.x, target.y, 2, '#000000');
-            drawArms(pos1, target, '#ff0000', 0);
-            drawArms(pos2, target, '#0000ff', 1);
-            log.innerText = ``;
+            drawCircle(target, 2, '#000000');
+
+            calculateArm(servo1, target, leftArmColor, 0);
+            calculateArm(servo2, target, rightArmColor, 1);
         }
 
         //step2();
