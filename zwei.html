@@ -13,13 +13,16 @@
     const servo1_pos = { x: 190, y: 50 }
     const servo2_pos = { x: 810, y: 50 }
 
+    var gelenk_links = { x: 100, y: 300 }
+    var pos_stift = { x: 190, y: 550 }
+
     function degToRad(angle) {
         return angle * Math.PI / 180;
     }
 
     function drawDot(point, size) {
         ctx.beginPath();
-        ctx.arc(point.x, point.y, size/2, degToRad(0), degToRad(359), false);
+        ctx.arc(point.x, point.y, size / 2, degToRad(0), degToRad(359), false);
         ctx.fill();
     }
 
@@ -42,13 +45,45 @@
         drawDot(ende, armWidth);
     }
 
-    ctx.fillStyle = '#ffc000';
-    ctx.fillRect(0, 0, 1000, 1000);
 
-    drawServo(servo1_pos);
-    drawServo(servo2_pos);
+    function drawCanvas() {
+        ctx.fillStyle = '#ffc000';
+        ctx.fillRect(0, 0, 1000, 1000);
 
-    drawArm(servo1_pos, servo2_pos);
+        drawServo(servo1_pos);
+        drawServo(servo2_pos);
+    }
+
+    function followMouse(event) {
+        var rect = this.getBoundingClientRect(),
+            mouse_position = {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        drawCanvas();
+        drawDot(mouse_position, 40);
+        drawArm(servo1_pos, mouse_position);
+    }
+
+    function draw_line_by_angle(starting_point, angle, length) {
+        a = length * Math.sin(angle);
+        b = length * Math.cos(angle);
+        ende_x = starting_point.x + b;
+        ende_y = starting_point.y + a;
+        ende = { x: ende_x, y: ende_y };
+
+        drawArm(starting_point, ende);
+    }
+
+    // initialization
+
+    // main program
+
+    drawCanvas();
+
+    draw_line_by_angle(servo1_pos, Math.PI / 4, 200);
+
+    myCanvas.onmousemove = followMouse;
 
 
 </script>
