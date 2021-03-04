@@ -17,4 +17,4 @@ Das Projekt wurde durch die folgenden Quellen inspiriert:
 + [FabLab Nürnberg PlotClock](https://github.com/fablabnbg/plotclock)
 + [Making Of A Sea Shell Sand Clock](https://mcuoneclipse.com/2016/11/23/making-of-sea-shell-sand-clock/)
 + [Heise Sanduhr 2.0, vertrieben durch Elektor](https://www.youtube.com/watch?v=YRU9UTVA9bU&t=391s) (leider nicht mehr erhältlich)
-+ [Sandurh 3.0](https://www.heise.de/ratgeber/Sanduhr-3-0-Plotter-Uhr-mit-leuchtenden-Ziffern-4256954.html)
++ [Sanduhr 3.0](https://www.heise.de/ratgeber/Sanduhr-3-0-Plotter-Uhr-mit-leuchtenden-Ziffern-4256954.html)
