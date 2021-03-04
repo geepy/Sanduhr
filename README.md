@@ -3,4 +3,4 @@ Ein Projekt zum Malen der Uhrzeit in Sand mithilfe von Arduino ESP8266 und Servo
 
 Die HTML-Seiten dienen der Erprobung des Algorithmus, wie man die Servos bewegen muss, ohne dabei Hardware kaputt zu machen.
 
-Die Seite [zwei.html](zwei.html) ist der aktuelle Entwicklungsstand.
+Die Seite [zwei.html](https://htmlpreview.github.io/?https://github.com/geepy/Sanduhr/blob/master/zwei.html) ist der aktuelle Entwicklungsstand.
