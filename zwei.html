@@ -12,6 +12,8 @@
     const ctx = myCanvas.getContext('2d');
     const servo1_pos = { x: 190, y: 50 }
     const servo2_pos = { x: 810, y: 50 }
+    const length_arm_b = 300;
+    const length_arm_a = 300;
 
     var gelenk_links = { x: 100, y: 300 }
     var pos_stift = { x: 190, y: 550 }
@@ -54,17 +56,6 @@
         drawServo(servo2_pos);
     }
 
-    function followMouse(event) {
-        var rect = this.getBoundingClientRect(),
-            mouse_position = {
-                x: event.clientX - rect.left,
-                y: event.clientY - rect.top
-            };
-        drawCanvas();
-        drawDot(mouse_position, 40);
-        drawArm(servo1_pos, mouse_position);
-    }
-
     function draw_line_by_angle(starting_point, angle, length) {
         a = length * Math.sin(angle);
         b = length * Math.cos(angle);
@@ -75,11 +66,44 @@
         drawArm(starting_point, ende);
     }
 
+    function draw_two_lines(from, to){
+        var DR = from.y - to.y;
+        var AR = from.x - to.x;
+        var AD = Math.sqrt(AR * AR + DR * DR);
+        var r1 = Math.asin(DR / AD);
+        var w1 = Math.asin(length_arm_b / AD);
+        var alpha = r1 + w1;
+        var w2 = Math.asin(AD / length_arm_a);
+        var beta2 = Math.Pi - alpha;
+        var AF = length_arm_a / Math.sin(beta2);
+        var FE = Math.sqrt(length_arm_a * length_arm_a - AF * AF);
+        var gelenk = { x: from.x + AF, y: from.y + FE };
+
+        draw_line_by_angle(from, alpha, length_arm_a);
+
+        draw_line_by_angle(gelenk, w2, length_arm_b);
+    }
+
+    function followMouse(event) {
+        var rect = this.getBoundingClientRect(),
+            mouse_position = {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        drawCanvas();
+        drawDot(mouse_position, 40);
+        drawArm(servo1_pos, mouse_position);
+        draw_two_lines(servo1_pos, mouse_position);
+    }
+
     // initialization
 
     // main program
 
     drawCanvas();
+
+    // var mouse_pos = { x: 400, y: 300 }
+    // draw_two_lines(servo1_pos, mouse_pos);
 
     draw_line_by_angle(servo1_pos, Math.PI / 4, 200);
 
