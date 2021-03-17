@@ -83,23 +83,15 @@
         var DR = to.y - from.y;
         var AR = to.x - from.x;
         var AD = Math.sqrt(AR * AR + DR * DR);
-        var r1 = (Math.asin(DR / AD));
+        var r1 = Math.atan(DR / AR);
         var w1 = Math.acos(
-            (
-                length_arm_a * length_arm_a
-                + AD * AD
-                - length_arm_b * length_arm_b
-            )
+            (length_arm_a ** 2 + AD ** 2 - length_arm_b ** 2)
             / (2 * length_arm_b * AD)
         ); // Kosinussatz
         var alpha = (r1 + w1);
         //var w2 = Math.asin(AD / length_arm_a);
         var w2 = Math.acos(
-            (
-                length_arm_a * length_arm_a
-                + length_arm_b * length_arm_b
-                - AD * AD
-            )
+            (length_arm_a ** 2 + length_arm_b ** 2 - AD ** 2)
             / (2 * length_arm_b * length_arm_a)
         ); // Kosinussatz
         var beta2 = Math.PI - alpha;
@@ -109,9 +101,9 @@
         var gelenk = { x: from.x - AF, y: from.y + FE };
         draw_line_by_angle(from, alpha, length_arm_a, COLOR_RED);
 
-//        console.log("from.x: {0}, from.y: {1}, DR: {2}, AR: {3}, AD: {4}, w2: {5}"
-//            .format(from.x, from.y, DR, AR, AD, w2));
-console.log("r1: {0}, w1: {1}"
+        //        console.log("from.x: {0}, from.y: {1}, DR: {2}, AR: {3}, AD: {4}, w2: {5}"
+        //            .format(from.x, from.y, DR, AR, AD, w2));
+        console.log("r1: {0}, w1: {1}"
             .format(r1, w1));
 
         drawDot(gelenk, 30);
