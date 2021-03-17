@@ -8,12 +8,13 @@
     <canvas width="1000px" height="1000" id="my-canvas"></canvas>
 </body>
 <script lang="javascript">
+    
     const myCanvas = document.getElementById("my-canvas")
     const ctx = myCanvas.getContext('2d');
     const servo1_pos = { x: 190, y: 50 }
     const servo2_pos = { x: 810, y: 50 }
-    const length_arm_b = 300;
-    const length_arm_a = 300;
+    const length_arm_b = 600;
+    const length_arm_a = 600;
 
     var gelenk_links = { x: 100, y: 300 }
     var pos_stift = { x: 190, y: 550 }
@@ -56,32 +57,36 @@
         drawServo(servo2_pos);
     }
 
-    function draw_line_by_angle(starting_point, angle, length) {
+    function draw_line_by_angle(starting_point, angle, length, farbe) {
         a = length * Math.sin(angle);
         b = length * Math.cos(angle);
         ende_x = starting_point.x + b;
         ende_y = starting_point.y + a;
         ende = { x: ende_x, y: ende_y };
+        
+        
 
-        drawArm(starting_point, ende);
+        drawArm(starting_point, ende);//
     }
 
     function draw_two_lines(from, to){
-        var DR = from.y - to.y;
-        var AR = from.x - to.x;
+        var DR =  to.y - from.y;
+        var AR =  to.x - from.x;
         var AD = Math.sqrt(AR * AR + DR * DR);
-        var r1 = Math.asin(DR / AD);
+        var r1 = (Math.asin(DR / AD));
         var w1 = Math.asin(length_arm_b / AD);
-        var alpha = r1 + w1;
-        var w2 = Math.asin(AD / length_arm_a);
-        var beta2 = Math.Pi - alpha;
+        var alpha = (r1 + w1) ;
+        //var w2 = Math.asin(AD / length_arm_a);
+        var w2 = Math.acos((DR * DR + AR * AR - AD * AD) / (2 * DR * AR)); // Kosinussatz
+        var beta2 = Math.PI - alpha;
         var AF = length_arm_a / Math.sin(beta2);
         var FE = Math.sqrt(length_arm_a * length_arm_a - AF * AF);
-        var gelenk = { x: from.x + AF, y: from.y + FE };
-
+        var gelenk = { x: from.x + AF.x, y: from.y + FE.y };
         draw_line_by_angle(from, alpha, length_arm_a);
 
         draw_line_by_angle(gelenk, w2, length_arm_b);
+        console.log(FE);
+        
     }
 
     function followMouse(event) {
@@ -94,6 +99,8 @@
         drawDot(mouse_position, 40);
         drawArm(servo1_pos, mouse_position);
         draw_two_lines(servo1_pos, mouse_position);
+        
+        
     }
 
     // initialization
