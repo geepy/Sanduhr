@@ -79,7 +79,7 @@
         drawArm(starting_point, ende, farbe);//
     }
 
-    function draw_two_lines_left(from, to) {
+   /* function draw_two_lines_left(from, to) {
         var DR = to.y - from.y;
         var AR = to.x - from.x;
         var AD = Math.sqrt(AR * AR + DR * DR);
@@ -88,61 +88,76 @@
             (length_arm_a ** 2 + AD ** 2 - length_arm_b ** 2)
             / (2 * length_arm_b * AD)
         ); // Kosinussatz
-        var alpha = (r1 + w1);
+        var alpha_links = (r1 + w1);
         if (AR < 0) {
-            alpha = (NEUNZIG_GRAD * 2 - r1) + w1
+            alpha_links = (NEUNZIG_GRAD * 2 - r1) + w1
         }
         //var w2 = Math.asin(AD / length_arm_a);
         var w2 = Math.acos(
             (length_arm_a ** 2 + length_arm_b ** 2 - AD ** 2)
             / (2 * length_arm_b * length_arm_a)
         ); // Kosinussatz
-        var beta2 = Math.PI - alpha;
+        var beta2 = Math.PI - alpha_links;
         var beta3 = NEUNZIG_GRAD - beta2;
         var AF = length_arm_a * Math.cos(beta2);
 
         var FE = Math.sqrt(length_arm_a * length_arm_a - AF * AF);
-        if (alpha > 2 * NEUNZIG_GRAD) {
+        if (alpha_links > 2 * NEUNZIG_GRAD) {
             FE = -FE;
         }
         var gelenk = { x: from.x - AF, y: from.y + FE };
-        draw_line_by_angle(from, alpha, length_arm_a, COLOR_RED);
+        draw_line_by_angle(from, alpha_links, length_arm_a, COLOR_RED);
 
         //        console.log("from.x: {0}, from.y: {1}, DR: {2}, AR: {3}, AD: {4}, w2: {5}"
         //            .format(from.x, from.y, DR, AR, AD, w2));
         console.log("alpha: {0}"
-            .format(alpha));
+            .format(alpha_links));
 
         drawDot(gelenk, 30);
         draw_line_by_angle(gelenk, w2 + beta3 - NEUNZIG_GRAD, length_arm_b, COLOR_GREEN);
-    }
-
-    // Zweiter Arm
-
-    //draw_two_lines_left(servo2_pos, mouse_position);
-
-
-
-
-    function followMouse(event) {
-        var rect = this.getBoundingClientRect(),
-            mouse_position = {
-                x: event.clientX - rect.left,
-                y: event.clientY - rect.top
-            };
-        drawCanvas();
-        drawDot(mouse_position, 40);
-        drawArm(servo1_pos, mouse_position, 'black');
-        draw_two_lines_left(servo1_pos, mouse_position);
-
-        // Zweiter Arm
-        //  drawArm(servo2_pos, mouse_position, 'black');
-        //   draw_two_lines_right(servo2_pos, mouse_position);
-
-
-    }
+    }var mouse_position = {x: mouse_position.x - 375, y : mouse_position.y}*/
 
     function draw_two_lines_right(from, to) {
+        var DR = to.y - from.y; //richtig 
+        var BR = from.x - to.x; //richtig 
+        var BD = Math.sqrt(BR * BR + DR * DR); //richtig
+        var r1 = (Math.asin(DR / BD)); //sinus könnte falsch sein aber idk
+        var w1 = Math.acos(
+            (length_arm_a ** 2 + BD ** 2 - length_arm_b ** 2)
+            / (2 * length_arm_b * BD)
+        ); // Kosinussatz, richtig
+        var alpha_rechts = (r1 + w1);
+        if (BR < 0) {
+            alpha_rechts = (NEUNZIG_GRAD * 2 - r1) + w1 // passt ig
+        }
+        //var w2 = Math.asin(AD / length_arm_a);
+        var w2 = Math.acos(
+            (length_arm_a ** 2 + length_arm_b ** 2 - BD ** 2)
+            / (2 * length_arm_b * length_arm_a)
+        ); // Kosinussatz, richtig
+        var beta2 = Math.PI - alpha_rechts; // richtig
+        var beta3 = NEUNZIG_GRAD - beta2; // richtig
+        var BF = length_arm_a * Math.cos(beta2); // ???
+
+        var FC = Math.sqrt(length_arm_a * length_arm_a - BF * BF);
+        if (alpha_rechts < 2 * NEUNZIG_GRAD) { //könnte richtig sein
+            FC = -FC;
+        }
+        var gelenk = { x: from.x + BF, y: from.y + FC }; //richtig
+        draw_line_by_angle(from, alpha_rechts, length_arm_a, COLOR_RED);
+
+        //        console.log("from.x: {0}, from.y: {1}, DR: {2}, AR: {3}, AD: {4}, w2: {5}"
+        //            .format(from.x, from.y, DR, AR, AD, w2));
+        console.log("BF: {0}, FC {1}"
+            .format(BF, FC));
+
+        drawDot(gelenk, 30);
+        draw_line_by_angle(gelenk, w2 + beta3 - NEUNZIG_GRAD, length_arm_b, COLOR_GREEN);
+
+
+
+    }
+   function draw_two_lines_left(from, to) {
 
         var DR = to.y - from.y;
         var AR = to.x + (from.x);
@@ -175,9 +190,30 @@
 
         drawDot(gelenk, 30);
         draw_line_by_angle(gelenk, w2 + beta3 - NEUNZIG_GRAD, length_arm_b, COLOR_GREEN);
+   }
+
+
+
+
+
+
+    function followMouse(event) {
+        var rect = this.getBoundingClientRect(),
+            mouse_position = {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        drawCanvas();
+        drawDot(mouse_position, 40);
+        drawArm(servo1_pos, mouse_position, 'black');
+       // var mouse_position = {x: mouse_position.x - 375, y : mouse_position.y}
+        draw_two_lines_left(servo1_pos, mouse_position);
+       // var mouse_position = {x: mouse_position.x + 375, y : mouse_position.y}
+
+        // Zweiter Arm
+        drawArm(servo2_pos, mouse_position, 'black');
+        draw_two_lines_right(servo2_pos, mouse_position);
     }
-
-
 
     // initialization
 
