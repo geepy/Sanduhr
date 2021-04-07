@@ -5,12 +5,20 @@
 </head>
 
 <body>
-    <canvas width="1000px" height="1000" id="my-canvas"></canvas>
+    <div style="height:1000px;width:1000px;position:relative">
+    <canvas width="1000px" height="1000px" id="my-canvas" style='position:absolute;top:0;left:0;z-index: 1;'></canvas>
+    <canvas width="1000px" height="1000px" id="my-overlay" style='position:absolute;top:0;left:0;z-index: 2;'></canvas>
+    </div>
+    <div>
+    <button type="button" onclick="clearOverlay()">Reset</button>
+</div>
 </body>
-<script lang="javascript">
+<script type="text/javascript">
 
     const myCanvas = document.getElementById("my-canvas")
     const ctx = myCanvas.getContext('2d');
+    const myOverlay = document.getElementById("my-overlay")
+    const ovl = myOverlay.getContext('2d');
     const servo1_pos = { x: 190, y: 50 }
     const servo2_pos = { x: 810, y: 50 }
     const length_arm_b = 600;
@@ -18,7 +26,6 @@
     const COLOR_RED = 'red';
     const COLOR_GREEN = 'green';
     const NEUNZIG_GRAD = Math.PI / 2;
-
 
     var pos_stift = { x: 190, y: 550 }
 
@@ -29,14 +36,28 @@
         }
         return a
     }
+
     function degToRad(angle) {
         return angle * Math.PI / 180;
     }
 
-    function drawDot(point, size) {
+    function drawDotOnCanvas(ctx, point, size)
+    {
         ctx.beginPath();
         ctx.arc(point.x, point.y, size / 2, degToRad(0), degToRad(359), false);
         ctx.fill();
+    }
+    
+    function drawDot(point, size) {
+        drawDotOnCanvas(ctx, point, size);
+    }
+
+    function drawDotOnOverlay(point, size) {
+        drawDotOnCanvas(ovl, point, size);
+    }
+
+    function clearOverlay() {
+        ovl.clearRect(0,0,myOverlay.width, myOverlay.height);
     }
 
     function drawServo(servo_pos) {
@@ -160,6 +181,7 @@
 
         drawDot(gelenk, 30);
         draw_line_by_angle(gelenk, -w2 + beta3 - NEUNZIG_GRAD, length_arm_b, COLOR_GREEN);
+        drawDotOnOverlay(to, 30);
     }
 
 
@@ -193,12 +215,14 @@
 
     drawCanvas();
 
+    clearOverlay();
+
     // var mouse_pos = { x: 400, y: 300 }
     // draw_two_lines(servo1_pos, mouse_pos);
 
     draw_line_by_angle(servo1_pos, Math.PI / 4, 200);
 
-    myCanvas.onmousemove = followMouse;
+    myOverlay.onmousemove = followMouse;
 
 
 
