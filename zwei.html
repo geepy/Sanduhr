@@ -30,7 +30,9 @@
     const NEUNZIG_GRAD = Math.PI / 2;
 
     var pos_stift = { x: 190, y: 550 }
+    var stift_malt = false;
 
+    // Hilfsfunktion, weil Javascript kein string.format() hat
     String.prototype.format = function () {
         a = this;
         for (k in arguments) {
@@ -39,15 +41,24 @@
         return a
     }
 
+    function stift_hoch() {
+        stift_malt = false;
+    }
+
+    function stift_runter() {
+        stift_malt = true;
+    }
+
     function degToRad(angle) {
         return angle * Math.PI / 180;
     }
 
     function drawDotOnCanvas(ctx, point, size) {
-        ctx.beginPath();
-        ctx.fillStyle = 'black';
-        ctx.arc(point.x, point.y, size / 2, degToRad(0), degToRad(359), false);
-        ctx.fill();
+        if (stift_malt) {
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, size / 2, degToRad(0), degToRad(359), false);
+            ctx.fill();
+        }
     }
 
     function drawDot(point, size) {
@@ -222,8 +233,8 @@
       }*/
 
     function draw_two_lines_left(from, to, seite) {
-        if (seite = left){
-            
+        if (seite = left) {
+
         }
         var DR = to.y - from.y;
         var AR = to.x - from.x;
@@ -274,9 +285,9 @@
             (length_arm_a ** 2 + BD ** 2 - length_arm_b ** 2)
             / (2 * length_arm_a * BD)
         ); // Kosinussatz
-        var beta = 2 * NEUNZIG_GRAD - (r1 + w1);
+        var alpha = 2 * NEUNZIG_GRAD - (r1 + w1);
         if (BR < 0) {
-            beta = beta - 2 * NEUNZIG_GRAD;
+            alpha = alpha - 2 * NEUNZIG_GRAD;
         }
         //var w2 = Math.asin(AD / length_arm_a);
         var w2 = Math.acos(
@@ -290,7 +301,7 @@
             gelenk = { x: from.x + AF, y: from.y + FE };
         }
         var FE = Math.sqrt(length_arm_a * length_arm_a - AF * AF);
-        if (beta < 0) {
+        if (alpha < 0) {
             FE = -FE;
         }
         var gelenk = { x: from.x - AF, y: from.y + FE };
@@ -298,14 +309,11 @@
 
         //        console.log("from.x: {0}, from.y: {1}, DR: {2}, AR: {3}, AD: {4}, w2: {5}"
         //            .format(from.x, from.y, DR, AR, AD, w2));
-        console.log(beta);
+        console.log(alpha);
         drawDotOnOverlay(to, 30);
         drawDot(gelenk, 30);
         draw_line_by_angle(gelenk, -w2 + beta3 - NEUNZIG_GRAD, length_arm_b, COLOR_GREEN);
     }
-
-
-
 
     function followMouse(event) {
         var rect = this.getBoundingClientRect(),
@@ -341,12 +349,18 @@
 
     clearOverlay();
 
-    // var mouse_pos = { x: 400, y: 300 }
-    // draw_two_lines(servo1_pos, mouse_pos);
-
-    draw_line_by_angle(servo1_pos, Math.PI / 4, 200);
-
+    // der Rest passiert in den Event-Handlern
     myOverlay.onmousemove = followMouse;
+    myOverlay.onmousedown = stift_runter;
+    myOverlay.onmouseup = stift_hoch;
+
+    // rechte Maustaste löscht Spur
+    // Default-Aktion (KOntextmenü des Browsers) wird verhindert
+    myOverlay.oncontextmenu = (event) => {
+        clearOverlay();
+        event.preventDefault();
+    }
+
 
 
 
