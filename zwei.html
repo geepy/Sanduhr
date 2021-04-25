@@ -5,14 +5,19 @@
 </head>
 
 <body>
-    <div style="height:1000px;width:1000px;position:relative">
-        <canvas width="1000px" height="1000px" id="my-canvas"
+    <div style="height:700px;width:1000px;position:relative">
+        <canvas width="1000px" height="700px" id="my-canvas"
             style='position:absolute;top:0;left:0;z-index: 1;'></canvas>
-        <canvas width="1000px" height="1000px" id="my-overlay"
+        <canvas width="1000px" height="700px" id="my-overlay"
             style='position:absolute;top:0;left:0;z-index: 2;'></canvas>
     </div>
     <div>
-        <button type="button" onclick="clearOverlay()">Reset</button>
+        <button type="button" onclick="drawCanvas()">Reset</button>
+        <br>
+        Linker Servo: <input type="range" min="0" max="180" id="left_angle" value="135" style="width:10rem"
+            oninput="update_arms_from_ui()">&nbsp;<span id='leftSliderValue'></span>&nbsp;
+        Rechter Servo: <input type="range" min="0" max="180" id="right_angle" value="45" style="width:10rem"
+            oninput="update_arms_from_ui()">&nbsp;<span id='rightSliderValue'></span>&nbsp;
     </div>
 </body>
 <script type="text/javascript">
@@ -21,10 +26,10 @@
     const ctx = myCanvas.getContext('2d');
     const myOverlay = document.getElementById("my-overlay")
     const ovl = myOverlay.getContext('2d');
-    const servo1_pos = { x: 190, y: 50 }
-    const servo2_pos = { x: 810, y: 50 }
-    const length_arm_b = 350;
-    const length_arm_a = 400;
+    const servo1_pos = { x: 390, y: 50 }
+    const servo2_pos = { x: 610, y: 50 }
+    const length_arm_b = 400;
+    const length_arm_a = 300;
     const COLOR_RED = 'red';
     const COLOR_GREEN = 'green';
     const NEUNZIG_GRAD = Math.PI / 2;
@@ -81,7 +86,7 @@
         drawDot(servo_pos, 10);
     }
 
-    function drawRect(pos, size) {
+    function drawSandbox(pos, size) {
         ctx.fillStyle = '#e0ff20';
         ctx.fillRect(pos.x, pos.y, size.x, size.y);
     }
@@ -98,13 +103,14 @@
         drawDot(ende, armWidth);
     }
 
-
     function drawCanvas() {
         ctx.fillStyle = '#ffc000';
-        ctx.fillRect(0, 0, 1000, 1000);
+        ctx.fillRect(0, 0, 1000, 700);
 
         drawServo(servo1_pos);
         drawServo(servo2_pos);
+
+        drawSandbox({ x: 150, y: 250 }, { x: 650, y: 300 });
     }
 
     function draw_line_by_angle(starting_point, angle, length, farbe) {
@@ -114,13 +120,8 @@
         ende_y = starting_point.y + a;
         ende = { x: ende_x, y: ende_y };
 
-
-
         drawArm(starting_point, ende, farbe);
     }
-
-    
-    
 
     function draw_two_lines_left(from, to) {
         var DR = to.y - from.y;
@@ -239,8 +240,85 @@
         }
     }
 
+    /****************************
+     * BEGIN Code von außerhalb *
+     ****************************/
 
+    function move_arms(angle_left, angle_right) {
+        var alpha = angle_left;
+        var beta = angle_right;
+        // berechnen des Endpunkts für linken unteren Arm
+        var x_a = Math.cos(alpha) * length_arm_a;
+        var y_a = Math.sin(alpha) * length_arm_a;
+        var pos_linker_arm = {
+            x: servo1_pos.x + x_a,
+            y: servo1_pos.y + y_a
+        }
+        // berechnen des Endpunkts für rechten unteren Arm
+        var x_b = Math.cos(beta) * length_arm_a;
+        var y_b = Math.sin(beta) * length_arm_a;
+        var pos_rechter_arm = {
+            x: servo2_pos.x + x_b,
+            y: servo2_pos.y + y_b
+        }
 
+        // Länge der Strecke C zwischen diesen beiden Punkten (Hypothenuse des Dreiecks C-Arm_b-Arm_b)
+        var c = Math.sqrt((pos_rechter_arm.x - pos_linker_arm.x) ** 2 + (pos_rechter_arm.y - pos_linker_arm.y) ** 2)
+
+        // check: C darf nicht länger sein als 2*b, sonst gibt es keinen Schnittpunkt zwischen den B-Armen
+        if (c > 2 * length_arm_b) {
+            console.log('Winkel {1} und {2} sind außerhalb des physisch darstellbaren Bereichs'.format(degToRad(alpha), degToRad(beta)))
+            return;
+        }
+
+        // Winkel zwischen C und arm_b (für beide gleich, da gleichschenkliges Dreieck)
+        var gamma = Math.acos(c / (2 * length_arm_b))
+        // Winkel zwischen Waagerechte und Linie C
+        var delta = 0;
+        if (pos_linker_arm.y != pos_rechter_arm.y) {
+            var e = (pos_rechter_arm.x - pos_linker_arm.x)
+            var f = (pos_rechter_arm.y - pos_linker_arm.y)
+            zwerg = (e ** 2 + c ** 2 - f ** 2) / (2 * e * c)
+            delta = Math.acos(zwerg)
+        }
+
+        var alpha_1 = gamma
+        var beta_1 = (2 * NEUNZIG_GRAD) - gamma
+        if (y_a > y_b) {
+            alpha_1 -= delta;
+            beta_1 -= delta;
+        } else {
+            alpha_1 += delta;
+            beta_1 += delta;
+        }
+
+        pos_stift = {
+            x: pos_linker_arm.x + Math.cos(alpha_1) * length_arm_b,
+            y: pos_linker_arm.y + Math.sin(alpha_1) * length_arm_b
+        };
+
+        // malen
+        drawCanvas()
+        draw_line_by_angle(servo1_pos, alpha, length_arm_a, COLOR_RED);
+        draw_line_by_angle(pos_linker_arm, alpha_1, length_arm_b, COLOR_GREEN);
+        draw_line_by_angle(servo2_pos, beta, length_arm_a, COLOR_RED);
+        draw_line_by_angle(pos_rechter_arm, beta_1, length_arm_b, COLOR_GREEN);
+        drawDotOnOverlay(pos_stift, 20);
+    }
+
+    function update_arms_from_ui() {
+        leftSliderValue.innerText = left_angle.value;
+        rightSliderValue.innerText = right_angle.value;
+        alpha = parseInt(left_angle.value, 10) / 180 * Math.PI;
+        beta = parseInt(right_angle.value, 10) / 180 * Math.PI;
+        stift_runter();
+        move_arms(alpha, beta);
+        stift_hoch();
+    }
+
+    /**************************
+     * END Code von außerhalb *
+     **************************/
 
     // Zweiter Arm
 
@@ -259,7 +337,43 @@
         console.log(Abstand)
     }
 
+    function winkel_berechnen(from, to, seite) {
 
+        if (seite == 2) {
+            var DR = to.y - from.y; //check
+            var BR = (from.x) - to.x; //check
+            var BD = Math.sqrt(BR * BR + DR * DR); //check     
+            var r1 = Math.atan(DR / BR); //check außer rechts von servo2_pos
+            var w1 = Math.acos(
+                (length_arm_a ** 2 + BD ** 2 - length_arm_b ** 2)
+                / (2 * length_arm_a * BD)
+            ); // Kosinussatz
+            var alpha = 2 * NEUNZIG_GRAD - (r1 + w1);
+            if (BR < 0) {
+                alpha = alpha - 2 * NEUNZIG_GRAD;
+            }
+            console.log((180/Math.PI) * (alpha));
+            console.log(2);
+        }
+
+        else {
+            var DR = to.y - from.y;
+            var AR = to.x - from.x;
+            var AD = Math.sqrt(AR * AR + DR * DR);
+            var r1 = (Math.asin(DR / AD));
+            var w1 = Math.acos(
+                (length_arm_a ** 2 + AD ** 2 - length_arm_b ** 2)
+                / (2 * length_arm_a * AD)
+            ); // Kosinussatz
+            var alpha = (r1 + w1);
+            if (AR < 0) {
+                alpha = (NEUNZIG_GRAD * 2 - r1) + w1
+                console.log(hahaomg)
+            }
+            console.log((180/Math.PI) * (alpha));
+            console.log(1);
+        }
+    }
 
     /*function followMouse(event) {
         var rect = this.getBoundingClientRect(),
@@ -267,9 +381,11 @@
                 x: event.clientX - rect.left,
                 y: event.clientY - rect.top
             };
-
-
+ 
+ 
     }*/
+
+
 
     function draw_number_one(place) {
         if (place == 1) {
@@ -301,7 +417,8 @@
 
     // der Rest passiert in den Event-Handlern
 
-    draw_number_one(1);
+    winkel_berechnen(servo1_pos, { x: 500, y: 500 }, 1);
+    winkel_berechnen(servo2_pos, { x: 500, y: 500 }, 2);
     //  myOverlay.onmousedown = stift_runter;
     // myOverlay.onmouseup = stift_hoch;
 
