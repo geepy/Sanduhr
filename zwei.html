@@ -109,7 +109,7 @@
 
         drawServo(servo1_pos);
         drawServo(servo2_pos);
-        
+
         drawSandbox({ x: 150, y: 250 }, { x: 650, y: 300 });
     }
 
@@ -247,23 +247,18 @@
     function move_arms(angle_left, angle_right) {
         var alpha = angle_left;
         var beta = angle_right;
-        // berechnen des Endpunkts für linken unteren Arm
-        var x_a = Math.cos(alpha) * length_arm_a;
-        var y_a = Math.sin(alpha) * length_arm_a;
-        var pos_linker_arm = {
-            x: servo1_pos.x + x_a,
-            y: servo1_pos.y + y_a
+        // berechnen des Endpunkts für unteren Arm
+        var gelenk_links = {
+            x: servo1_pos.x + Math.cos(alpha) * length_arm_a,
+            y: servo1_pos.y + Math.sin(alpha) * length_arm_a
         }
-        // berechnen des Endpunkts für rechten unteren Arm
-        var x_b = Math.cos(beta) * length_arm_a;
-        var y_b = Math.sin(beta) * length_arm_a;
-        var pos_rechter_arm = {
-            x: servo2_pos.x + x_b,
-            y: servo2_pos.y + y_b
+        var gelenk_rechts = {
+            x: servo2_pos.x + Math.cos(beta) * length_arm_a,
+            y: servo2_pos.y + Math.sin(beta) * length_arm_a
         }
 
         // Länge der Strecke C zwischen diesen beiden Punkten (Hypothenuse des Dreiecks C-Arm_b-Arm_b)
-        var c = Math.sqrt((pos_rechter_arm.x - pos_linker_arm.x) ** 2 + (pos_rechter_arm.y - pos_linker_arm.y) ** 2)
+        var c = Math.sqrt((gelenk_rechts.x - gelenk_links.x) ** 2 + (gelenk_rechts.y - gelenk_links.y) ** 2)
 
         // check: C darf nicht länger sein als 2*b, sonst gibt es keinen Schnittpunkt zwischen den B-Armen
         if (c > 2 * length_arm_b) {
@@ -275,34 +270,30 @@
         var gamma = Math.acos(c / (2 * length_arm_b))
         // Winkel zwischen Waagerechte und Linie C
         var delta = 0;
-        if (pos_linker_arm.y != pos_rechter_arm.y) {
-            var e = (pos_rechter_arm.x - pos_linker_arm.x)
-            var f = (pos_rechter_arm.y - pos_linker_arm.y)
+        if (gelenk_links.y != gelenk_rechts.y) {
+            var e = (gelenk_rechts.x - gelenk_links.x)
+            var f = (gelenk_rechts.y - gelenk_links.y)
             zwerg = (e ** 2 + c ** 2 - f ** 2) / (2 * e * c)
             delta = Math.acos(zwerg)
+            if (y_a > y_b) { delta = -delta; }
         }
 
-        var alpha_1 = gamma
-        var beta_1 = (2 * NEUNZIG_GRAD) - gamma
-        if (y_a > y_b) {
-            alpha_1 -= delta;
-            beta_1 -= delta;
-        } else {
-            alpha_1 += delta;
-            beta_1 += delta;
-        }
+        var alpha_1 = gamma + delta
+        var beta_1 = (2 * NEUNZIG_GRAD) - gamma + delta
 
         pos_stift = {
-            x: pos_linker_arm.x + Math.cos(alpha_1) * length_arm_b,
-            y: pos_linker_arm.y + Math.sin(alpha_1) * length_arm_b
+            x: gelenk_links.x + Math.cos(alpha_1) * length_arm_b,
+            y: gelenk_links.y + Math.sin(alpha_1) * length_arm_b
         };
 
         // malen
         drawCanvas()
         draw_line_by_angle(servo1_pos, alpha, length_arm_a, COLOR_RED);
-        draw_line_by_angle(pos_linker_arm, alpha_1, length_arm_b, COLOR_GREEN);
+        draw_line_by_angle(gelenk_links, alpha_1, length_arm_b, COLOR_GREEN);
+        
         draw_line_by_angle(servo2_pos, beta, length_arm_a, COLOR_RED);
-        draw_line_by_angle(pos_rechter_arm, beta_1, length_arm_b, COLOR_GREEN);
+        draw_line_by_angle(gelenk_rechts, beta_1, length_arm_b, COLOR_GREEN);
+        
         drawDotOnOverlay(pos_stift, 20);
     }
 
