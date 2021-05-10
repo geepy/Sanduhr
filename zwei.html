@@ -8,7 +8,7 @@
     <div style="height:700px;width:1000px;position:relative">
         <canvas width="1000px" height="700px" id="my-canvas"
             style='position:absolute;top:0;left:0;z-index: 1;'></canvas>
-        <canvas width="1000px" height="700px" id="my-overlay"
+        <canvas width="1000px" height="700px" id="myOverlay"
             style='position:absolute;top:0;left:0;z-index: 2;'></canvas>
     </div>
     <div>
@@ -24,7 +24,6 @@
 
     const myCanvas = document.getElementById("my-canvas")
     const ctx = myCanvas.getContext('2d');
-    const myOverlay = document.getElementById("my-overlay")
     const ovl = myOverlay.getContext('2d');
     const servo1_pos = { x: 390, y: 50 }
     const servo2_pos = { x: 610, y: 50 }
@@ -114,49 +113,20 @@
     }
 
     function draw_line_by_angle(starting_point, angle, length, farbe) {
+        ende = end_from_angle(starting_point, angle, length);
+        drawArm(starting_point, ende, farbe);
+    }
+
+    function end_from_angle(starting_point, angle, length) {
         a = length * Math.sin(angle);
         b = length * Math.cos(angle);
         ende_x = starting_point.x + b;
         ende_y = starting_point.y + a;
         ende = { x: ende_x, y: ende_y };
 
-        drawArm(starting_point, ende, farbe);
+        return ende;
     }
 
-    function draw_two_lines_left(from, to) {
-        var DR = to.y - from.y;
-        var AR = to.x - from.x;
-        var AD = Math.sqrt(AR * AR + DR * DR);
-        var r1 = (Math.asin(DR / AD));
-        var w1 = Math.acos(
-            (length_arm_a ** 2 + AD ** 2 - length_arm_b ** 2)
-            / (2 * length_arm_a * AD)
-        ); // Kosinussatz
-        var alpha = (r1 + w1);
-        if (AR < 0) {
-            alpha = (NEUNZIG_GRAD * 2 - r1) + w1
-        }
-        //var w2 = Math.asin(AD / length_arm_a);
-        var w2 = Math.acos(
-            (length_arm_a ** 2 + length_arm_b ** 2 - AD ** 2)
-            / (2 * length_arm_b * length_arm_a)
-        ); // Kosinussatz
-        var beta2 = Math.PI - alpha;
-        var beta3 = NEUNZIG_GRAD - beta2;
-        var AF = length_arm_a * Math.cos(beta2);
-
-        var FE = Math.sqrt(length_arm_a * length_arm_a - AF * AF);
-        if (alpha > 2 * NEUNZIG_GRAD) {
-            FE = -FE;
-        }
-        var gelenk = { x: from.x - AF, y: from.y + FE };
-
-        draw_line_by_angle(from, alpha, length_arm_a, COLOR_RED);
-        drawDot(gelenk, 30);
-        draw_line_by_angle(gelenk, w2 + beta3 - NEUNZIG_GRAD, length_arm_b, COLOR_GREEN);
-
-        return alpha;
-    }
 
 
     function draw_two_lines(from, to, seite) {
@@ -240,6 +210,8 @@
         }
     }
 
+
+
     /****************************
      * BEGIN Code von außerhalb *
      ****************************/
@@ -253,6 +225,7 @@
         var pos_linker_arm = {
             x: servo1_pos.x + x_a,
             y: servo1_pos.y + y_a
+            
         }
         // berechnen des Endpunkts für rechten unteren Arm
         var x_b = Math.cos(beta) * length_arm_a;
@@ -334,11 +307,11 @@
         drawDotOnOverlay({ x: end.x, y: end.y })
         //Berechnen des Abstands der Punkte
         var Abstand = Math.PI * (Math.sqrt((start.x - end.x) ** 2 + (start.y - end.y) ** 2))
-        console.log(Abstand)
+
     }
 
-    function winkel_berechnen(from, to, seite) {
-
+    function calculate_angle(from, to, seite) {
+        var alpha;
         if (seite == 2) {
             var DR = to.y - from.y; //check
             var BR = (from.x) - to.x; //check
@@ -348,12 +321,12 @@
                 (length_arm_a ** 2 + BD ** 2 - length_arm_b ** 2)
                 / (2 * length_arm_a * BD)
             ); // Kosinussatz
-            var alpha = 2 * NEUNZIG_GRAD - (r1 + w1);
+            alpha = 2 * NEUNZIG_GRAD - (r1 + w1);
             if (BR < 0) {
                 alpha = alpha - 2 * NEUNZIG_GRAD;
             }
-            console.log((180/Math.PI) * (alpha));
-            console.log(2);
+
+
         }
 
         else {
@@ -365,46 +338,416 @@
                 (length_arm_a ** 2 + AD ** 2 - length_arm_b ** 2)
                 / (2 * length_arm_a * AD)
             ); // Kosinussatz
-            var alpha = (r1 + w1);
+            alpha = (r1 + w1);
             if (AR < 0) {
                 alpha = (NEUNZIG_GRAD * 2 - r1) + w1
-                console.log(hahaomg)
+
             }
-            console.log((180/Math.PI) * (alpha));
-            console.log(1);
-        }
-    }
 
-    /*function followMouse(event) {
-        var rect = this.getBoundingClientRect(),
-            mouse_position = {
-                x: event.clientX - rect.left,
-                y: event.clientY - rect.top
-            };
- 
- 
-    }*/
-
-
-
-    function draw_number_one(place) {
-        if (place == 1) {
-
-            draw_two_lines(servo1_pos, { x: 500, y: 500 }, 1);
-            draw_two_lines(servo2_pos, { x: 500, y: 500 }, 2);
-
-            stift_runter();
-            drawDotOnOverlay({ x: 500, y: 500 }, 10);
-            draw_arc({ x: 500, y: 500 }, { x: 400, y: 600 })
-            stift_hoch();
 
         }
+        return alpha;
     }
 
 
-    //  draw
+    function draw_circle(radius_x, radius_y, mittelpunkt, start_winkel, end_winkel) {
+        for (winkel = start_winkel; winkel < end_winkel; winkel += NEUNZIG_GRAD / 20) {
+            var ende = end_from_angle(mittelpunkt, winkel, radius_x);
+            // skalieren, damit es ein Oval wird
+            ende.y = mittelpunkt.y + (ende.y - mittelpunkt.y) * (radius_y / radius_x);
+
+            var alpha = calculate_angle(servo1_pos, ende, 1);
+            var beta = calculate_angle(servo2_pos, ende, 2);
+            console.log('kreis', alpha, beta);
+            move_arms(alpha, beta);
+        }
+        var ende = end_from_angle(mittelpunkt, winkel, radius_x);
+        // skalieren, damit es ein Oval wird
+        ende.y = mittelpunkt.y + (ende.y - mittelpunkt.y) * (radius_y / radius_x);
+
+        var alpha = calculate_angle(servo1_pos, ende, 1);
+        var beta = calculate_angle(servo2_pos, ende, 2);
+
+        move_arms(alpha, beta);
+
+    }
+
+    function draw_servo_line(start, end) {
+
+    }
+
+    function move_arms_to(ende) {
+        var alpha = calculate_angle(servo1_pos, ende, 1);
+        var beta = calculate_angle(servo2_pos, ende, 2);
+        console.log('linie', alpha, beta)
+        move_arms(alpha, beta);
+    }
+
+    function draw_line(start, end) {
+        var a;
+        var b;
+        if (end.y >= start.y) {
+            a = start.y - end.y;
+        }
+        if (end.y <= start.y) {
+            a = end.y - start.y;
+        }
+        if (start.x >= end.x) {
+            b = end.x - start.x;
+        }
+        if (start.x <= end.x) {
+            b = end.x - start.x;
+        }
+
+        var c = Math.sqrt((a ** 2) + (b ** 2));
+
+        var abstand = c / 25;
+        var actual_abstand;
+        var angle = Math.acos(b / c);
+
+        if (start.y > end.y) {
+            angle = 2 * Math.PI - angle;
+        }
+
+        move_arms_to(start);
+        for (actual_abstand = abstand; actual_abstand <= c; actual_abstand += abstand) {
+
+            var ende = end_from_angle(start, angle, actual_abstand);
+            move_arms_to(ende);
+        }
+        move_arms_to(end);
+
+
+    }
+
+
+
+    function draw_number_one(start, höhe, breite) {
+        var current_position;
+        var future_position;
+        stift_hoch();
+        move_arms_to(start);
+        stift_runter();
+
+
+        current_position = { x: start.x, y: start.y - (2 / 3 * höhe) };
+
+        stift_hoch();
+        move_arms_to(current_position);
+        stift_runter();
+
+        future_position = { x: start.x + breite, y: start.y - höhe };
+
+        draw_line(current_position, future_position);
+        current_position = future_position;
+        future_position = { x: start.x + breite, y: start.y };
+        draw_line(current_position, future_position);
+
+
+
+
+        stift_hoch();
+    }
+
+    function draw_number_two(start, höhe, breite) {
+        var current_position;
+        var future_position;
+        stift_hoch();
+        move_arms_to(start);
+        stift_runter();
+
+        var viertel_zwei = höhe / 4;
+
+
+        current_position = { x: start.x + breite / 2, y: start.y - höhe + breite / 2 };
+
+        stift_hoch();
+        move_arms_to(current_position);
+        stift_runter();
+
+        future_position = { x: start.x + breite, y: start.y - höhe + breite / 2 };
+        draw_circle(breite / 2, viertel_zwei, current_position, 2 * NEUNZIG_GRAD, 4 * NEUNZIG_GRAD);
+        draw_line(future_position, start);
+        current_position = start;
+        future_position = { x: start.x + breite, y: start.y }
+        draw_line(current_position, future_position);
+    }
+
+    function draw_number_three(start, höhe, breite) {
+        var current_position;
+        var future_position;
+        stift_hoch();
+        move_arms_to(start);
+        stift_runter();
+
+        var viertel_drei = höhe / 4;
+
+        current_position = { x: start.x + breite / 2, y: start.y - höhe + viertel_drei };
+
+        stift_hoch();
+        move_arms_to(current_position);
+        stift_runter();
+
+        future_position = { x: start.x + breite / 2, y: start.y - viertel_drei };
+        draw_circle(breite / 2, viertel_drei, current_position, 2 * NEUNZIG_GRAD, 5 * NEUNZIG_GRAD);
+        draw_circle(breite / 2, viertel_drei, future_position, 3 * NEUNZIG_GRAD, 6 * NEUNZIG_GRAD);
+
+    }
+
+    function draw_number_four(start, höhe, breite) {
+        var current_position;
+        var future_position;
+        stift_hoch();
+        move_arms_to(start);
+        stift_runter();
+
+
+        current_position = { x: start.x + breite, y: start.y - höhe * 0.4 };
+
+        stift_hoch();
+        move_arms_to(current_position);
+        stift_runter();
+
+        future_position = { x: start.x, y: start.y - höhe * 0.4 };
+        draw_line(current_position, future_position);
+
+        current_position = future_position;
+        future_position = { x: start.x + breite / 2, y: start.y - höhe };
+        draw_line(current_position, future_position);
+
+
+        stift_hoch();
+        future_position = { x: start.x + breite / 2, y: start.y - höhe * 0.6 };
+        move_arms_to(future_position);
+        current_position = future_position;
+        future_position = { x: start.x + breite / 2, y: start.y }
+        stift_runter();
+        draw_line(current_position, future_position);
+
+    }
+
+    function draw_number_five(start, höhe, breite) {
+        var current_position;
+        var future_position;
+        stift_hoch();
+        move_arms_to(start);
+        stift_runter();
+
+        var viertel_vier = höhe / 4;
+
+        current_position = { x: start.x + breite, y: start.y - höhe };
+
+        stift_hoch();
+        move_arms_to(current_position);
+        stift_runter();
+        future_position = { x: start.x, y: start.y - höhe };
+        draw_line(current_position, future_position);
+        current_position = future_position;
+        future_position = { x: start.x, y: start.y - 2 * viertel_vier };
+        draw_line(current_position, future_position);
+        current_position = future_position;
+        future_position = { x: start.x + breite / 2, y: start.y - 2 * viertel_vier };
+        draw_line(current_position, future_position);
+        future_position = { x: start.x + breite / 2, y: start.y - höhe / 4 };
+        draw_circle(breite / 2, viertel_vier, future_position, 3 * NEUNZIG_GRAD, 6 * NEUNZIG_GRAD);
+
+    }
+
+    function draw_number_six(start, höhe, breite) {
+        var current_position;
+        var future_position;
+        stift_hoch();
+        move_arms_to(start);
+        stift_runter();
+
+        var viertel_sechs = höhe / 4;
+
+        future_position = { x: start.x + breite / 2, y: start.y - viertel_sechs };
+
+        stift_hoch();
+        move_arms_to(future_position);
+        stift_runter();
+        draw_circle(breite / 2, viertel_sechs, future_position, 0, 4 * NEUNZIG_GRAD);
+        current_position = { x: start.x, y: start.y - breite / 2 };
+        future_position = { x: start.x, y: start.y - (höhe - breite / 2) };
+        draw_line(current_position, future_position);
+        current_position = { x: start.x + breite / 2, y: start.y - (höhe - viertel_sechs) };
+        draw_circle(breite / 2, viertel_sechs, current_position, 2 * NEUNZIG_GRAD, 4 * NEUNZIG_GRAD);
+    }
+
+    function draw_number_seven(start, höhe, breite) {
+        var current_position;
+        var future_position;
+        stift_hoch();
+        move_arms_to(start);
+        stift_runter();
+
+
+
+        current_position = { x: start.x, y: start.y - höhe };
+
+        stift_hoch();
+        move_arms_to(current_position);
+        stift_runter();
+
+        future_position = { x: start.x + breite, y: start.y - höhe };
+        draw_line(current_position, future_position);
+
+        current_position = future_position;
+        future_position = start;
+        draw_line(current_position, future_position);
+
+        current_position = { x: start.x, y: start.y - höhe / 2 };
+        future_position = { x: start.x + breite, y: start.y - höhe / 2 }
+        draw_line(current_position, future_position);
+    }
+
+    function draw_number_eight(start, höhe, breite) {
+        var current_position;
+        var future_position;
+
+        var viertel_acht = höhe / 4;
+
+
+        move_arms_to({ x: start.x + breite, y: start.y + viertel_acht });
+
+        current_position = { x: start.x + breite / 2, y: start.y - viertel_acht };
+        stift_runter();
+        draw_circle(breite / 2, viertel_acht, current_position, 0, 4 * NEUNZIG_GRAD);
+        stift_hoch();
+        current_position.y -= 2 * viertel_acht;
+        stift_runter();
+        draw_circle(breite / 2, viertel_acht, current_position, 0, 4 * NEUNZIG_GRAD);
+        stift_hoch();
+    }
+
+    function draw_number_nine(start, höhe, breite) {
+        var current_position;
+        var future_position;
+        stift_hoch();
+        move_arms_to(start);
+        stift_runter();
+
+        var viertel_neun = höhe / 4;
+
+
+        future_position = { x: start.x + breite / 2, y: start.y - höhe + viertel_neun };
+
+        stift_hoch();
+        move_arms_to(future_position);
+        stift_runter();
+
+        draw_circle(breite / 2, viertel_neun, future_position, 0, 4 * NEUNZIG_GRAD);
+        current_position = { x: start.x + breite, y: start.y - breite / 2 };
+        future_position = { x: start.x + breite, y: start.y - (höhe - viertel_neun) };
+        draw_line(current_position, future_position);
+        current_position = { x: start.x + breite / 2, y: start.y - viertel_neun };
+        draw_circle(breite / 2, viertel_neun, current_position, 0, 2 * NEUNZIG_GRAD);
+    }
+
+    function draw_number_zero(start, höhe, breite) {
+        var current_position;
+        var future_position;
+        stift_hoch();
+        move_arms_to(start);
+        stift_runter();
+
+
+        future_position = { x: start.x + breite / 2, y: start.y - höhe + breite / 2 };
+
+        stift_hoch();
+        move_arms_to(future_position);
+        stift_runter();
+
+        var viertel_null = höhe / 4;
+
+        draw_circle(breite / 2, viertel_null, future_position, 2 * NEUNZIG_GRAD, 4 * NEUNZIG_GRAD);
+        current_position = { x: start.x + breite, y: start.y - viertel_null };
+        future_position = { x: start.x + breite, y: start.y - (höhe - breite / 2) };
+        draw_line(current_position, future_position);
+        current_position = { x: start.x + breite / 2, y: start.y - viertel_null };
+        draw_circle(breite / 2, viertel_null, current_position, 0, 2 * NEUNZIG_GRAD);
+
+        current_position = { x: start.x, y: start.y - viertel_null };
+        future_position = { x: start.x, y: start.y - (höhe - breite / 2) };
+        draw_line(current_position, future_position);
+    }
+
+    function draw_number(position, number) {
+
+        var actual_start;
+        var real_width = 126.5;
+        var spacing = 36;
+        var real_height = 300;
+
+        actual_start = { x: 150 + (position - 1) * (real_width + spacing), y: 550 };
+
+        if (position > 2) {
+            actual_start.x += spacing;
+        }
+
+        switch (number) {
+            case 1:
+                draw_number_one(actual_start, real_height, real_width);
+                break;
+            case 2:
+                draw_number_two(actual_start, real_height, real_width);
+                break;
+            case 3:
+                draw_number_three(actual_start, real_height, real_width);
+                break;
+
+            case 4:
+                draw_number_four(actual_start, real_height, real_width);
+                break;
+
+            case 5:
+                draw_number_five(actual_start, real_height, real_width);
+                break;
+
+            case 6:
+                draw_number_six(actual_start, real_height, real_width);
+                break;
+
+            case 7:
+                draw_number_seven(actual_start, real_height, real_width);
+                break;
+
+            case 8:
+                draw_number_eight(actual_start, real_height, real_width);
+                break;
+
+            case 9:
+                draw_number_nine(actual_start, real_height, real_width);
+                break;
+
+            case 0:
+                draw_number_zero(actual_start, real_height, real_width);
+                break;
+        }
+    }
+
+    function draw_time(first_digit, second_digit, third_digit, fourth_digit) {
+        draw_number(1, first_digit);
+        draw_number(2, second_digit);
+        draw_number(3, third_digit);
+        draw_number(4, fourth_digit);
+    }
+
+
+    /*
+     **********************************************************
+     Possible start points : 
+     First Position = {x:150, y: 550}
+     Second Position = {x:150 + 162,5, y: 550}
+     Third Position = {x:150 + 162,5 + 162,5, y: 550}
+     Fourth Position = {x:150 + 162,5 + 162,5 + 162,5, y: 550} 
+     **********************************************************
+     */
+
+
+
     // initialization
-
     // main program
 
 
@@ -417,8 +760,7 @@
 
     // der Rest passiert in den Event-Handlern
 
-    winkel_berechnen(servo1_pos, { x: 500, y: 500 }, 1);
-    winkel_berechnen(servo2_pos, { x: 500, y: 500 }, 2);
+
     //  myOverlay.onmousedown = stift_runter;
     // myOverlay.onmouseup = stift_hoch;
 
@@ -428,9 +770,15 @@
         clearOverlay();
         event.preventDefault();
     }
+    // calculate_angle(servo1_pos, { x: 500, y: 500 }, 1);
+    // calculate_angle(servo2_pos, { x: 500, y: 500 }, 2);q
 
+    stift_runter();
 
-
+    var date = new Date();
+    draw_time(Math.floor(date.getHours() / 10), date.getHours() % 10, Math.floor(date.getMinutes() / 10), date.getMinutes() % 10);
+    //draw_time(3, 6, 6, 6);
+    stift_hoch();
 
 </script>
 
