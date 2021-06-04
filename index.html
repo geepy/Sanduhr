@@ -2,7 +2,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Meine tolle Seite</title>
+    <title>Sanduhr.org</title>
 </head>
 
 <body>
@@ -13,13 +13,7 @@
             style='position:absolute;top:0;left:0;z-index: 2;'></canvas>
     </div>
     <div>
-        <button type="button" onclick="drawCanvas()">Reset</button>
-        <br>
-        Linker Servo: <input type="range" min="0" max="180" id="left_angle" value="135" style="width:10rem"
-            oninput="update_arms_from_ui()">&nbsp;<span id='leftSliderValue'></span>&nbsp;
-        Rechter Servo: <input type="range" min="0" max="180" id="right_angle" value="45" style="width:10rem"
-            oninput="update_arms_from_ui()">&nbsp;<span id='rightSliderValue'></span>&nbsp;
-        <br>
+        <button type="button" onclick="drawHardware()"> Mal die Zahlen in den Sand!</button>
         <br>
         <a href="https://github.com/geepy/Sanduhr">Das GitHub Repository zu diesem Projekt</a>
     </div>
@@ -628,11 +622,6 @@
         current_position = { x: start.x, y: start.y - viertel_null };
         future_position = { x: start.x, y: start.y - 3 * viertel_null };
         await draw_line(current_position, future_position);
-
-
-
-
-
     }
 
     async function draw_number(position, number) {
@@ -721,6 +710,9 @@
         setTimeout("draw_new_time(false)", 1000);
     }
 
+    function drawHardware() {
+        self.location = '/index.html?drawTime='+new Date().toTimeString().substring(0,5)
+    }
 
     /*
      **********************************************************
