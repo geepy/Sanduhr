@@ -35,10 +35,13 @@
     const COLOR_RED = 'red';
     const COLOR_GREEN = 'green';
     const NEUNZIG_GRAD = Math.PI / 2;
-    const DELAY = 10;
+    const DELAY = 20;
 
     var pos_stift = { x: 190, y: 550 }
     var stift_malt = false;
+    var real_width = 126.5;
+    var spacing = 36;
+    var real_height = 300;
 
     // Hilfsfunktion, weil Javascript kein string.format() hat
     String.prototype.format = function () {
@@ -103,7 +106,7 @@
         ctx.lineTo(ende.x, ende.y);
         ctx.strokeStyle = farbe;
         ctx.stroke();
-        drawDot(ende, armWidth);
+        // drawDot(ende, armWidth);
     }
 
     function drawCanvas() {
@@ -113,7 +116,7 @@
         drawServo(servo1_pos);
         drawServo(servo2_pos);
 
-        drawSandbox({ x: 150, y: 250 }, { x: 650, y: 300 });
+        drawSandbox({ x: 130, y: 230 }, { x: 690, y: 340 });
     }
 
     function draw_line_by_angle(starting_point, angle, length, farbe) {
@@ -135,7 +138,6 @@
 
     function draw_two_lines(from, to, seite) {
         if (seite == 1) {
-            // function draw_two_lines_left(from, to, seite) {
             var DR = to.y - from.y;
             var AR = to.x - from.x;
             var AD = Math.sqrt(AR * AR + DR * DR);
@@ -149,7 +151,6 @@
                 alpha = (NEUNZIG_GRAD * 2 - r1) + w1
 
             }
-            //var w2 = Math.asin(AD / length_arm_a);
             var w2 = Math.acos(
                 (length_arm_a ** 2 + length_arm_b ** 2 - AD ** 2)
                 / (2 * length_arm_b * length_arm_a)
@@ -173,8 +174,6 @@
 
 
         else {
-            // function draw_two_lines_right(from, to) {
-
             var DR = to.y - from.y; //check
             var BR = (from.x) - to.x; //check
             var BD = Math.sqrt(BR * BR + DR * DR); //check     
@@ -204,10 +203,6 @@
             }
             var gelenk = { x: from.x - AF, y: from.y + FE };
             draw_line_by_angle(from, alpha, length_arm_a, COLOR_RED);
-
-            //        console.log("from.x: {0}, from.y: {1}, DR: {2}, AR: {3}, AD: {4}, w2: {5}"
-            //            .format(from.x, from.y, DR, AR, AD, w2));
-
             drawDotOnOverlay(to, 30);
             drawDot(gelenk, 30);
             draw_line_by_angle(gelenk, -w2 + beta3 - NEUNZIG_GRAD, length_arm_b, COLOR_GREEN);
@@ -297,23 +292,6 @@
     /**************************
      * END Code von außerhalb *
      **************************/
-
-    // Zweiter Arm
-
-    //draw_two_lines_left(servo2_pos, mouse_position);
-
-
-    //mein krams
-
-    function draw_arc(start, end, points) {
-        //startpunkt dot
-        drawDotOnOverlay({ x: start.x, y: start.y }, 15)
-        //endpunkt dot
-        drawDotOnOverlay({ x: end.x, y: end.y })
-        //Berechnen des Abstands der Punkte
-        var Abstand = Math.PI * (Math.sqrt((start.x - end.x) ** 2 + (start.y - end.y) ** 2))
-
-    }
 
     function calculate_angle(from, to, seite) {
         var alpha;
@@ -454,13 +432,12 @@
 
         var viertel_zwei = höhe / 4;
 
-        current_position = { x: start.x + breite / 2, y: start.y - höhe + breite / 2 };
+        current_position = { x: start.x + breite / 2, y: start.y - (höhe - viertel_zwei) };
 
-        move_arms_to(current_position);
 
         stift_runter();
 
-        future_position = { x: start.x + breite, y: start.y - höhe + breite / 2 };
+        future_position = { x: start.x + breite, y: start.y - (höhe - viertel_zwei) };
         await draw_circle(breite / 2, viertel_zwei, current_position, 2 * NEUNZIG_GRAD, 4 * NEUNZIG_GRAD);
         await draw_line(future_position, start);
         current_position = start;
@@ -476,8 +453,6 @@
         var viertel_drei = höhe / 4;
 
         current_position = { x: start.x + breite / 2, y: start.y - höhe + viertel_drei };
-
-        move_arms_to(current_position);
 
         stift_runter();
 
@@ -547,7 +522,6 @@
 
         future_position = { x: start.x + breite / 2, y: start.y - viertel_sechs };
 
-        move_arms_to(future_position);
 
         stift_runter();
         await draw_circle(breite / 2, viertel_sechs, future_position, 0, 4 * NEUNZIG_GRAD);
@@ -607,10 +581,12 @@
 
         stift_runter();
 
+        future_position = { x: start.x + breite / 2, y: start.y - (höhe - viertel_neun) };
+
         await draw_circle(breite / 2, viertel_neun, future_position, 0, 4 * NEUNZIG_GRAD);
         current_position = { x: start.x + breite, y: start.y - breite / 2 };
         future_position = { x: start.x + breite, y: start.y - (höhe - viertel_neun) };
-        await draw_line(current_position, future_position);
+        await draw_line(future_position, current_position);
         current_position = { x: start.x + breite / 2, y: start.y - viertel_neun };
         await draw_circle(breite / 2, viertel_neun, current_position, 0, 2 * NEUNZIG_GRAD);
         stift_hoch();
@@ -620,33 +596,32 @@
         var current_position;
         var future_position;
 
-        future_position = { x: start.x + breite / 2, y: start.y - höhe + breite / 2 };
-
-        move_arms_to(future_position);
-
-        stift_runter();
-
         var viertel_null = höhe / 4;
 
-        await draw_circle(breite / 2, viertel_null, future_position, 2 * NEUNZIG_GRAD, 4 * NEUNZIG_GRAD);
+        current_position = { x: start.x + breite / 2, y: start.y - 3 * viertel_null };
+
+        await draw_circle(breite / 2, viertel_null, current_position, 2 * NEUNZIG_GRAD, 4 * NEUNZIG_GRAD)
+
+        current_position = { x: start.x + breite, y: start.y - 3 * viertel_null };
         future_position = { x: start.x + breite, y: start.y - viertel_null };
-        current_position = { x: start.x + breite, y: start.y - (höhe - breite / 2) };
+
         await draw_line(current_position, future_position);
         current_position = { x: start.x + breite / 2, y: start.y - viertel_null };
         await draw_circle(breite / 2, viertel_null, current_position, 0, 2 * NEUNZIG_GRAD);
-
         current_position = { x: start.x, y: start.y - viertel_null };
-        future_position = { x: start.x, y: start.y - (höhe - breite / 2) };
+        future_position = { x: start.x, y: start.y - 3 * viertel_null };
         await draw_line(current_position, future_position);
-        stift_hoch();
+
+
+
+
+
     }
 
     async function draw_number(position, number) {
 
         var actual_start;
-        var real_width = 126.5;
-        var spacing = 36;
-        var real_height = 300;
+
 
         actual_start = { x: 150 + (position - 1) * (real_width + spacing), y: 550 };
 
@@ -692,6 +667,7 @@
             case 0:
                 await draw_number_zero(actual_start, real_height, real_width);
                 break;
+
         }
     }
 
@@ -728,44 +704,15 @@
         setTimeout("draw_new_time(false)", 1000);
     }
 
-
-    /*
-     **********************************************************
-     Possible start points : 
-     First Position = {x:150, y: 550}
-     Second Position = {x:150 + 162,5, y: 550}
-     Third Position = {x:150 + 162,5 + 162,5, y: 550}
-     Fourth Position = {x:150 + 162,5 + 162,5 + 162,5, y: 550} 
-     **********************************************************
-     */
-
-
-
-    // initialization
-    // main program
-
-
-
     drawCanvas();
 
-
-
-    //clearOverlay();
-
-    // der Rest passiert in den Event-Handlern
-
-
-    //  myOverlay.onmousedown = stift_runter;
-    // myOverlay.onmouseup = stift_hoch;
-
-    // rechte Maustaste löscht Spur
-    // Default-Aktion (Kontextmenü des Browsers) wird verhindert
     myOverlay.oncontextmenu = (event) => {
         clearOverlay();
         event.preventDefault();
     }
 
     draw_new_time(true);
+
 </script>
 
 </html>

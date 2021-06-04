@@ -31,11 +31,14 @@
     const NEUNZIG_GRAD = Math.PI / 2;
     const DELAY = 20;
 
-    var pos_stift = { x: 190, y: 550 }
+    var pos_stift = { x: 190, y: 550 };
     var stift_malt = false;
     var real_width = 126.5;
     var spacing = 36;
     var real_height = 300;
+    var stift_position = { x: 190, y: 550 };
+
+
 
     // Hilfsfunktion, weil Javascript kein string.format() hat
     String.prototype.format = function () {
@@ -270,6 +273,11 @@
             y: gelenk_links.y + Math.sin(alpha_1) * length_arm_b
         };
 
+        stift_position = {
+            x: gelenk_links.x + Math.cos(alpha_1) * length_arm_b,
+            y: gelenk_links.y + Math.sin(alpha_1) * length_arm_b
+        };
+
         // malen
         drawCanvas()
         draw_line_by_angle(servo1_pos, alpha, length_arm_a, COLOR_RED);
@@ -346,6 +354,7 @@
 
     async function draw_circle(radius_x, radius_y, mittelpunkt, start_winkel, end_winkel) {
         stift_hoch();
+        var wechsel = 1;
         for (winkel = start_winkel; winkel < end_winkel; winkel += NEUNZIG_GRAD / 20) {
             var ende = end_from_angle(mittelpunkt, winkel, radius_x);
             // skalieren, damit es ein Oval wird
@@ -353,8 +362,24 @@
 
             var alpha = calculate_angle(servo1_pos, ende, 1);
             var beta = calculate_angle(servo2_pos, ende, 2);
-            stift_runter();
+            await stift_runter();
+
+            if (wechsel == 1) {
+
+                if (stift_position = ende) {
+
+                }
+                else {
+                    await draw_invisible_line(stift_position, ende);
+                }
+            }
+
+            wechsel = 2;
+
+
             await move_arms(alpha, beta);
+
+
         }
         var ende = end_from_angle(mittelpunkt, winkel, radius_x);
         // skalieren, damit es ein Oval wird
@@ -376,7 +401,12 @@
         var beta = calculate_angle(servo2_pos, ende, 2);
 
         await move_arms(alpha, beta);
+
+        stift_position = ende;
+
     }
+
+
 
     async function draw_line(start, end) {
         var a;
@@ -413,6 +443,49 @@
         await move_arms_to(end);
 
 
+
+    }
+
+    async function draw_invisible_line(start, end) {
+
+        stift_hoch();
+
+        var a;
+        var b;
+        if (end.y >= start.y) {
+            a = start.y - end.y;
+        }
+        if (end.y <= start.y) {
+            a = end.y - start.y;
+        }
+        if (start.x >= end.x) {
+            b = end.x - start.x;
+        }
+        if (start.x <= end.x) {
+            b = end.x - start.x;
+        }
+
+        var c = Math.sqrt((a ** 2) + (b ** 2));
+
+        var abstand = c / 25;
+        var actual_abstand;
+        var angle = Math.acos(b / c);
+
+        if (start.y > end.y) {
+            angle = 2 * Math.PI - angle;
+        }
+
+        await move_arms_to(start);
+        for (actual_abstand = abstand; actual_abstand <= c; actual_abstand += abstand) {
+
+            var ende = end_from_angle(start, angle, actual_abstand);
+            await move_arms_to(ende);
+        }
+        await move_arms_to(end);
+
+        stift_runter();
+
+
     }
 
 
@@ -423,9 +496,13 @@
 
         current_position = { x: start.x, y: start.y - (2 / 3 * höhe) };
 
-        await move_arms_to(current_position);
+        move_arms_to(start);
 
-        stift_runter();
+
+
+        await draw_invisible_line(stift_position, current_position);
+
+
 
         future_position = { x: start.x + breite, y: start.y - höhe };
 
@@ -444,6 +521,8 @@
         var viertel_zwei = höhe / 4;
 
         current_position = { x: start.x + breite / 2, y: start.y - (höhe - viertel_zwei) };
+
+
 
 
         stift_runter();
@@ -479,7 +558,7 @@
 
         current_position = { x: start.x + breite, y: start.y - höhe * 0.4 };
 
-        move_arms_to(current_position);
+        await draw_invisible_line(stift_position, current_position);
 
         stift_runter();
         future_position = { x: start.x, y: start.y - höhe * 0.4 };
@@ -492,7 +571,7 @@
 
         stift_hoch();
         future_position = { x: start.x + breite / 2, y: start.y - höhe * 0.6 };
-        move_arms_to(future_position);
+        await draw_invisible_line(stift_position, future_position);
         current_position = future_position;
         future_position = { x: start.x + breite / 2, y: start.y }
         stift_runter();
@@ -508,7 +587,7 @@
 
         current_position = { x: start.x + breite, y: start.y - höhe };
 
-        move_arms_to(current_position);
+        await draw_invisible_line(stift_position, current_position);
 
         stift_runter();
         future_position = { x: start.x, y: start.y - höhe };
@@ -533,9 +612,11 @@
 
         future_position = { x: start.x + breite / 2, y: start.y - viertel_sechs };
 
+        await draw_invisible_line(stift_position, future_position);
+
 
         stift_runter();
-        await draw_circle(breite / 2, viertel_sechs, future_position, 0, 4 * NEUNZIG_GRAD);
+        await draw_circle(breite / 2, viertel_sechs, future_position, 2 * NEUNZIG_GRAD, 6 * NEUNZIG_GRAD);
         current_position = { x: start.x, y: start.y - breite / 2 };
         future_position = { x: start.x, y: start.y - (höhe - breite / 2) };
         await draw_line(current_position, future_position);
@@ -550,11 +631,11 @@
 
         current_position = { x: start.x, y: start.y - höhe };
 
-        move_arms_to(current_position);
-
+        await draw_invisible_line(stift_position, current_position);
         stift_runter();
 
         future_position = { x: start.x + breite, y: start.y - höhe };
+
         await draw_line(current_position, future_position);
 
         current_position = future_position;
@@ -563,6 +644,7 @@
 
         current_position = { x: start.x, y: start.y - höhe / 2 };
         future_position = { x: start.x + breite, y: start.y - höhe / 2 }
+        await draw_invisible_line(stift_position, current_position);
         await draw_line(current_position, future_position);
         stift_hoch();
     }
@@ -576,11 +658,11 @@
 
         current_position = { x: start.x + breite / 2, y: start.y - viertel_acht };
         stift_runter();
-        await draw_circle(breite / 2, viertel_acht, current_position, 0, 4 * NEUNZIG_GRAD);
+        await draw_circle(breite / 2, viertel_acht, current_position, 3 * NEUNZIG_GRAD, 7 * NEUNZIG_GRAD);
         stift_hoch();
         current_position.y -= 2 * viertel_acht;
         stift_runter();
-        await draw_circle(breite / 2, viertel_acht, current_position, 0, 4 * NEUNZIG_GRAD);
+        await draw_circle(breite / 2, viertel_acht, current_position, 1 * NEUNZIG_GRAD, 5 * NEUNZIG_GRAD);
         stift_hoch();
     }
 
@@ -623,6 +705,7 @@
         future_position = { x: start.x, y: start.y - 3 * viertel_null };
         await draw_line(current_position, future_position);
     }
+
 
     async function draw_number(position, number) {
 
@@ -681,11 +764,11 @@
         var punkt_unten = { x: start.x + width / 2, y: start.y + (1 / 3) * height };
         var punkt_oben = { x: start.x + width / 2, y: start.y + (2 / 3) * height };
         stift_hoch();
-        await move_arms_to(punkt_unten);
+        await draw_invisible_line(punkt_unten);
         stift_runter();
         drawDotOnOverlay(punkt_unten, 20);
         stift_hoch();
-        await move_arms_to(punkt_oben);
+        await draw_invisible_line(punkt_oben);
         stift_runter();
         drawDotOnOverlay(punkt_oben, 20);
         stift_hoch();
@@ -694,7 +777,7 @@
     async function draw_time(first_digit, second_digit, third_digit, fourth_digit, start, width, height) {
         await draw_number(1, first_digit);
         await draw_number(2, second_digit);
-        await draw_doppelpunkt({ x: 150, y: 250 }, 300, 650);
+        // await draw_doppelpunkt({ x: 150, y: 250 }, 300, 650);
         await draw_number(3, third_digit);
         await draw_number(4, fourth_digit);
     }
@@ -750,7 +833,12 @@
         event.preventDefault();
     }
 
-    draw_new_time(true);
+    // draw_new_time(true);
+
+
+    draw_time(4, 5, 6, 7)
+
+    //move_arms_to({x: 150, y: 550});
     //draw_time(0);
 
 </script>
