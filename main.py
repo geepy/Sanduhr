@@ -1,4 +1,6 @@
-import network 
+import network
+from machine import Pin
+from time import sleep
 from sanduhr import Sanduhr
 from webserver import webserver
 from geheim import ssid, pwd
@@ -26,5 +28,17 @@ def init_wifi_ap():
     ap.active(True)
     print('WLAN spanned!')
     print(ap.ifconfig())
+
+def rumble():
+    rumble = Pin(2, Pin.OUT, value=1)
+    for i in range(3):
+        rumble.value(0)
+        sleep(1)
+        rumble.value(1)
+        sleep(0.2)
+
+def draw_time(time_str):
+    rumble()
+    sanduhr.draw_time_from_str(time_str)
 
 # init_webserver()

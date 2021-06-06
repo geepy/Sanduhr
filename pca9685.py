@@ -92,10 +92,10 @@ class PCA9685:
         if angle > self.max_angles[unit]:
             angle = self.max_angles[unit]
 
-        switchpoint = self.min_values[unit] + (self.max_values[unit]-self.min_values[unit])*(angle/self.max_angles[unit])
-        print('pulse is '+str(switchpoint)+' ticks long')
+        switchpoint = self.min_values[unit] + (self.max_values[unit]-self.min_values[unit])*(float(angle)/self.max_angles[unit])
+        # print(str(int(switchpoint))+' ', end='')
 
-        self.set_pwm(unit, 0, switchpoint)
+        self.set_pwm(unit, 0, int(switchpoint))
         
     def deinit(self):
         """Stop using the pca9685."""
