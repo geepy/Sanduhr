@@ -13,7 +13,7 @@
             style='position:absolute;top:0;left:0;z-index: 2;'></canvas>
     </div>
     <div>
-        <button type="button" onclick="drawHardware()"> Mal die Zahlen in den Sand!</button>
+        <button type="button" style="height: 200; width: 400;"  onclick="drawHardware()"> Mal die Zahlen in den Sand!</button>
         <br>
         <a href="https://github.com/geepy/Sanduhr">Das GitHub Repository zu diesem Projekt</a>
     </div>
@@ -30,6 +30,7 @@
     const COLOR_GREEN = 'green';
     const NEUNZIG_GRAD = Math.PI / 2;
     const DELAY = 20;
+    const PUNKTE = 4;
 
     var pos_stift = { x: 190, y: 550 };
     var stift_malt = false;
@@ -37,7 +38,7 @@
     var spacing = 36;
     var real_height = 300;
     var stift_position = { x: 190, y: 550 };
-
+    var wirklicher_start = { x: 150, y: 550 }
 
 
     // Hilfsfunktion, weil Javascript kein string.format() hat
@@ -365,17 +366,10 @@
             await stift_runter();
 
             if (wechsel == 1) {
+                await draw_invisible_line(stift_position, ende);
 
-                if (stift_position = ende) {
-
-                }
-                else {
-                    await draw_invisible_line(stift_position, ende);
-                }
+                wechsel = 2;
             }
-
-            wechsel = 2;
-
 
             await move_arms(alpha, beta);
 
@@ -426,7 +420,7 @@
 
         var c = Math.sqrt((a ** 2) + (b ** 2));
 
-        var abstand = c / 25;
+        var abstand = PUNKTE;
         var actual_abstand;
         var angle = Math.acos(b / c);
 
@@ -467,7 +461,7 @@
 
         var c = Math.sqrt((a ** 2) + (b ** 2));
 
-        var abstand = c / 25;
+        var abstand = PUNKTE;
         var actual_abstand;
         var angle = Math.acos(b / c);
 
@@ -521,9 +515,6 @@
         var viertel_zwei = höhe / 4;
 
         current_position = { x: start.x + breite / 2, y: start.y - (höhe - viertel_zwei) };
-
-
-
 
         stift_runter();
 
@@ -612,15 +603,12 @@
 
         future_position = { x: start.x + breite / 2, y: start.y - viertel_sechs };
 
-        await draw_invisible_line(stift_position, future_position);
-
-
         stift_runter();
         await draw_circle(breite / 2, viertel_sechs, future_position, 2 * NEUNZIG_GRAD, 6 * NEUNZIG_GRAD);
         current_position = { x: start.x, y: start.y - breite / 2 };
-        future_position = { x: start.x, y: start.y - (höhe - breite / 2) };
-        await draw_line(current_position, future_position);
-        current_position = { x: start.x + breite / 2, y: start.y - (höhe - viertel_sechs) };
+        future_position = { x: start.x, y: start.y - 3 * viertel_sechs };
+        await draw_line(stift_position, future_position);
+        current_position = { x: start.x + breite / 2, y: (future_position.y) };
         await draw_circle(breite / 2, viertel_sechs, current_position, 2 * NEUNZIG_GRAD, 4 * NEUNZIG_GRAD);
         stift_hoch();
     }
@@ -677,7 +665,7 @@
         future_position = { x: start.x + breite / 2, y: start.y - (höhe - viertel_neun) };
 
         await draw_circle(breite / 2, viertel_neun, future_position, 0, 4 * NEUNZIG_GRAD);
-        current_position = { x: start.x + breite, y: start.y - breite / 2 };
+        current_position = { x: start.x + breite, y: start.y - viertel_neun };
         future_position = { x: start.x + breite, y: start.y - (höhe - viertel_neun) };
         await draw_line(future_position, current_position);
         current_position = { x: start.x + breite / 2, y: start.y - viertel_neun };
@@ -712,7 +700,7 @@
         var actual_start;
 
 
-        actual_start = { x: 150 + (position - 1) * (real_width + spacing), y: 550 };
+        actual_start = { x: (wirklicher_start.x) + (position - 1) * (real_width + spacing), y: (wirklicher_start.y) };
 
         if (position > 2) {
             actual_start.x += spacing;
@@ -760,15 +748,15 @@
         }
     }
 
-    async function draw_doppelpunkt(start, height, width) {
-        var punkt_unten = { x: start.x + width / 2, y: start.y + (1 / 3) * height };
-        var punkt_oben = { x: start.x + width / 2, y: start.y + (2 / 3) * height };
+    async function draw_doppelpunkt(height, width) {
+        var punkt_unten = { x: wirklicher_start.x + real_width * 2 + spacing * 2, y: wirklicher_start.y - (1 / 3) * real_height };
+        var punkt_oben = { x: wirklicher_start.x + real_width * 2 + spacing * 2, y: wirklicher_start.y - (2 / 3) * real_height };
         stift_hoch();
-        await draw_invisible_line(punkt_unten);
+        await draw_invisible_line(stift_position, punkt_unten);
         stift_runter();
         drawDotOnOverlay(punkt_unten, 20);
         stift_hoch();
-        await draw_invisible_line(punkt_oben);
+        await draw_invisible_line(stift_position, punkt_oben);
         stift_runter();
         drawDotOnOverlay(punkt_oben, 20);
         stift_hoch();
@@ -777,7 +765,7 @@
     async function draw_time(first_digit, second_digit, third_digit, fourth_digit, start, width, height) {
         await draw_number(1, first_digit);
         await draw_number(2, second_digit);
-        // await draw_doppelpunkt({ x: 150, y: 250 }, 300, 650);
+        await draw_doppelpunkt(real_width / 2, real_height);
         await draw_number(3, third_digit);
         await draw_number(4, fourth_digit);
     }
@@ -794,7 +782,7 @@
     }
 
     function drawHardware() {
-        self.location = '/index.html?drawTime='+new Date().toTimeString().substring(0,5)
+        self.location = '/index.html?drawTime=' + new Date().toTimeString().substring(0, 5)
     }
 
     /*
@@ -833,10 +821,10 @@
         event.preventDefault();
     }
 
-    // draw_new_time(true);
+    draw_new_time(true);
 
 
-    draw_time(4, 5, 6, 7)
+    //draw_time(8, 8, 6, 6)
 
     //move_arms_to({x: 150, y: 550});
     //draw_time(0);
