@@ -5,11 +5,6 @@ from sanduhr import Sanduhr
 from webserver import webserver
 from geheim import ssid, pwd
 
-sanduhr = Sanduhr()
-
-def init_webserver():
-    webserver(lambda str: sanduhr.draw_time_from_str(str)).run_server()
-
 def init_wifi_sta():
     station = network.WLAN(network.STA_IF)
     ap = network.WLAN(network.AP_IF)
@@ -37,8 +32,13 @@ def rumble():
         rumble.value(1)
         sleep(0.2)
 
+sanduhr = Sanduhr()
+
 def draw_time(time_str):
     rumble()
     sanduhr.draw_time_from_str(time_str)
 
-# init_webserver()
+def init_webserver():
+    webserver(lambda str: draw_time(str)).run_server()
+
+init_webserver()
