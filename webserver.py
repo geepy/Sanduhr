@@ -16,8 +16,11 @@ class webserver:
             req = ''+str(req, 'utf-8')
             print(req)
             if "?drawTime=" in req:
-                new_time = req.substring(req.index('='), 5)
+                new_time = req[req.index('=')+1:][:5]
                 print('new time is: '+str(new_time, 'utf-8'))
+                if new_time.index(':')==2:
+                    self.draw_time(new_time)
+                    
 
         
         # always return index.html
@@ -31,7 +34,6 @@ class webserver:
                 read_data = f.read(chunksize)
                 if not read_data:
                     break # done
-                print(read_data, sep='')
                 client.sendall(str(read_data, 'utf-8'))
         client.sendall('\n\n\n\n')
         client.close()

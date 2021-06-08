@@ -5,7 +5,6 @@ from pca9685 import PCA9685
 
 # for-Loop-Erweiterung für beliebige inkrementierbare Datentypen, range() geht nur für integer
 
-
 def frange(start, end, increment):
     f = start
     while f < end:
@@ -13,13 +12,10 @@ def frange(start, end, increment):
         f += increment
 
 # Speicher für X/Y-Koordinaten
-
-
 class Point:
     def __init__(self,  x, y):
         self.x = x
         self.y = y
-
 
 # Positionen der Servo-Drehpunkte und des Sandkastens im Koordinatensystem
 servo1_pos = Point(390, 50)
@@ -65,7 +61,7 @@ class Sanduhr:
 
     def stift_hoch(self):
         if not self.stift_ist_hoch:
-            for i in range(60, 30, -1):
+            for i in range(47, 30, -1):
                 self.pca.set_angle(self.id_stift, i)
                 sleep(0.01)
         self.stift_ist_hoch = True
@@ -73,7 +69,7 @@ class Sanduhr:
 
     def stift_runter(self):
         if self.stift_ist_hoch:
-            for i in range(30, 60, 1):
+            for i in range(30, 47, 1):
                 self.pca.set_angle(self.id_stift, i)
                 sleep(0.01)
         self.stift_ist_hoch = False
@@ -90,18 +86,14 @@ class Sanduhr:
     def end_from_angle(self, starting_point, angle, length):
         a = length * math.sin(angle)
         b = length * math.cos(angle)
-        ende_x = starting_point.x + b
-        ende_y = starting_point.y + a
-        ende = Point(ende_x, ende_y)
-
-        return ende
+        return Point(starting_point.x + b, starting_point.y + a)
 
     def calculate_angle(self, start, ende, seite):
         if (seite == 2):
-            DR = ende.y - start.y  # check
-            BR = start.x - ende.x  # check
-            BD = math.sqrt(BR * BR + DR * DR)  # check
-            r1 = math.atan(DR / BR)  # check außer rechts von servo2_pos
+            DR = ende.y - start.y
+            BR = start.x - ende.x
+            BD = math.sqrt(BR * BR + DR * DR)
+            r1 = math.atan(DR / BR)
             w1 = math.acos(
                 (length_arm_a ** 2 + BD ** 2 - length_arm_b ** 2)
                 / (2 * length_arm_a * BD)
@@ -128,7 +120,6 @@ class Sanduhr:
     def move_arms_to(self, ende):
         alpha = self.calculate_angle(servo1_pos, ende, 1)
         beta = self.calculate_angle(servo2_pos, ende, 2)
-
         self.move_arms(alpha, beta)
 
     def draw_circle(self, radius_x, radius_y, mittelpunkt, start_winkel, end_winkel):
@@ -168,7 +159,6 @@ class Sanduhr:
 
         self.move_arms_to(start)
         for actual_abstand in frange(abstand, c, abstand):
-
             ende = self.end_from_angle(start, angle, actual_abstand)
             self.move_arms_to(ende)
 
@@ -326,13 +316,7 @@ class Sanduhr:
         self.draw_line(pos, next_pos)
         self.stift_hoch()
 
-    def draw_number(self, position, number):
-        start = Point(sandbox_start.x + (position - 1) *
-                      (real_width + spacing),  sandbox_start.y)
-
-        if position > 2:
-            start.x += spacing
-
+    def draw_number(self, start, number):
         number_painter = [self.draw_number_zero, self.draw_number_one, self.draw_number_two,
                           self.draw_number_three, self.draw_number_four, self.draw_number_five,
                           self.draw_number_six, self.draw_number_seven, self.draw_number_eight,
@@ -340,7 +324,7 @@ class Sanduhr:
         number_painter[number](start, real_height, real_width)
 
     def draw_doppelpunkt(self, start):
-        pos = Point(start.x + real_width / 2,
+        pos = Point(start.x + (spacing / 2),
                     start.y + (1 / 3) * real_height)
 
         self.move_arms_to(pos)
@@ -352,14 +336,17 @@ class Sanduhr:
         self.stift_runter()
         self.stift_hoch()
 
-    def draw_time_from_digits(self, first_digit, second_digit, third_digit, fourth_digit):
-        self.draw_number(1, first_digit)
-        self.draw_number(2, second_digit)
-        # self.draw_doppelpunkt(sandbox_start)
-        self.draw_number(3, third_digit)
-        self.draw_number(4, fourth_digit)
-        self.move_arms(3*NEUNZIG_GRAD/2, NEUNZIG_GRAD/2)
-
     def draw_time_from_str(self, timestr):
-        timestr = ('00000'+timestr)[-5:]
-        self.draw_time_from_digits(int(timestr[0]), int(timestr[0]), int(timestr[1]), int(timestr[3]), int(timestr[4]))
+        timestr = ('0'+timestr)[-5:]
+        start = Point(sandbox_start.x, sandbox_start.y)
+        self.draw_number(start, int(timestr[0]))
+        start.x += real_width + spacing
+        self.draw_number(start, int(timestr[1]))
+        start.x += real_width + spacing
+        self.draw_doppelpunkt(start)
+        start.x += spacing
+        self.draw_number(start, int(timestr[3]))
+        start.x += real_width + spacing
+        self.draw_number(start, int(timestr[4]))
+        self.move_arms(3 * NEUNZIG_GRAD / 2, NEUNZIG_GRAD / 2)
+        
