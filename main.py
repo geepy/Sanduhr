@@ -41,4 +41,3 @@ def draw_time(time_str):
 def init_webserver():
     webserver(lambda str: draw_time(str)).run_server()
 
-init_webserver()
